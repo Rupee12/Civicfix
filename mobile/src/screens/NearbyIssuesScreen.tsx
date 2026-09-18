@@ -1,0 +1,20 @@
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as Location from 'expo-location';
+import { apiErrorMessage } from '../api/client';
+import { getNearbyIssues } from '../api/issues';
+import type { Issue } from '../types/issue';
+
+export function NearbyIssuesScreen({ onSelect, onReport }: { onSelect: (id: string) => void; onReport: () => void }) {
+  const [issues, setIssues] = useState<Issue[]>([]); const [error, setError] = useState(''); const [loading, setLoading] = useState(true);
+  async function load() {
+    setLoading(true); setError('');
+    try { const permission = await Location.requestForegroundPermissionsAsync(); if (permission.status !== 'granted') { setError('Location permission is needed to find nearby issues.'); return; } const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }); setIssues(await getNearbyIssues(location.coords.latitude, location.coords.longitude)); }
+    catch (requestError) { setError(apiErrorMessage(requestError)); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { void load(); }, []);
+  return <ScrollView style={styles.screen} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} />}><View style={styles.header}><View><Text style={styles.kicker}>YOUR AREA</Text><Text style={styles.heading}>Nearby issues</Text></View><Text style={styles.count}>{issues.length}</Text></View><Pressable onPress={onReport} style={styles.reportButton}><Text style={styles.reportButtonText}>+ Report an issue</Text></Pressable>{loading && !issues.length ? <ActivityIndicator color="#28745A" /> : null}{error ? <Text style={styles.error}>{error}</Text> : null}{!loading && !error && !issues.length ? <Text style={styles.empty}>Nothing reported nearby yet.</Text> : null}{issues.map((issue) => <Pressable key={issue.id} onPress={() => onSelect(issue.id)} style={styles.card}><View style={styles.cardTop}><Text style={styles.category}>{issue.category.replaceAll('_', ' ')}</Text><Text style={styles.priorityBadge}>{issue.priorityLevel ?? 'LOW'} · {issue.priorityScore ?? 0}</Text></View><Text style={styles.title}>{issue.title}</Text><View style={styles.meta}><Text style={styles.badge}>{issue.severity}</Text><Text style={styles.status}>{issue.reportCount} reports · {issue.supportCount} supports</Text><Text style={styles.distance}>{issue.distanceMeters ?? 0} m</Text></View></Pressable>)}</ScrollView>;
+}
+
+const styles = StyleSheet.create({ screen: { flex: 1, backgroundColor: '#F5F7F2', padding: 22 }, header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }, kicker: { color: '#28745A', fontSize: 12, fontWeight: '800', letterSpacing: 1.4 }, heading: { color: '#15352B', fontSize: 30, fontWeight: '800', marginTop: 4 }, count: { color: '#E9774C', fontSize: 40, fontWeight: '800' }, reportButton: { backgroundColor: '#E9774C', borderRadius: 10, marginBottom: 18, padding: 14 }, reportButtonText: { color: '#FFF', fontWeight: '800', textAlign: 'center' }, card: { backgroundColor: '#FFF', borderRadius: 14, marginBottom: 12, padding: 16 }, cardTop: { flexDirection: 'row', justifyContent: 'space-between' }, category: { color: '#28745A', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }, priorityBadge: { color: '#B85633', fontSize: 12, fontWeight: '800' }, distance: { color: '#78867E', fontSize: 12 }, title: { color: '#1E332A', fontSize: 18, fontWeight: '700', marginVertical: 10 }, meta: { alignItems: 'center', flexDirection: 'row', gap: 8 }, badge: { backgroundColor: '#FFF0E8', borderRadius: 6, color: '#B85633', fontSize: 11, fontWeight: '800', paddingHorizontal: 8, paddingVertical: 5 }, status: { color: '#78867E', flex: 1, fontSize: 12 }, error: { color: '#B43D35', paddingVertical: 12 }, empty: { color: '#64736B', paddingVertical: 30, textAlign: 'center' } });

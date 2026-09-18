@@ -1,0 +1,31 @@
+import { Router } from "express";
+import { assignment, authorityQueue, checkDuplicates, create, createResolution, getById as getIssue, list, mine, nearby, priority, removeSupport, reports, resolution, status, statusHistory, support, supportStatus, verification, verificationSummary } from "../controllers/issueController.js";
+import { requireAuth, requireRole } from "../middleware/auth.js";
+import { issueUpload, resolutionUpload } from "../middleware/issueUpload.js";
+import { validateBody } from "../middleware/validate.js";
+import { validateQuery } from "../middleware/validateQuery.js";
+import { createIssueSchema, listIssuesSchema, nearbyIssuesSchema } from "../validators/issueValidators.js";
+import { duplicateCheckSchema } from "../validators/duplicateValidators.js";
+import { supportIssueSchema } from "../validators/duplicateValidators.js";
+import { assignmentSchema, authorityQueueSchema, resolutionSchema, statusUpdateSchema, verificationSchema } from "../validators/workflowValidators.js";
+
+export const issueRouter = Router();
+
+issueRouter.post("/", requireAuth, issueUpload, validateBody(createIssueSchema), create);
+issueRouter.post("/check-duplicates", requireAuth, validateBody(duplicateCheckSchema), checkDuplicates);
+issueRouter.get("/nearby", validateQuery(nearbyIssuesSchema), nearby);
+issueRouter.get("/my", requireAuth, validateQuery(listIssuesSchema), mine);
+issueRouter.get("/", validateQuery(listIssuesSchema), list);
+issueRouter.post("/:id/support", requireAuth, validateBody(supportIssueSchema), support);
+issueRouter.delete("/:id/support", requireAuth, removeSupport);
+issueRouter.get("/:id/support", requireAuth, supportStatus);
+issueRouter.get("/:id/reports", requireAuth, requireRole("ADMIN", "AUTHORITY"), reports);
+issueRouter.patch("/:id/assignment", requireAuth, requireRole("ADMIN"), validateBody(assignmentSchema), assignment);
+issueRouter.patch("/:id/status", requireAuth, validateBody(statusUpdateSchema), status);
+issueRouter.get("/:id/status-history", requireAuth, statusHistory);
+issueRouter.post("/:id/resolution", requireAuth, resolutionUpload, validateBody(resolutionSchema), createResolution);
+issueRouter.get("/:id/resolution", resolution);
+issueRouter.post("/:id/verification", requireAuth, validateBody(verificationSchema), verification);
+issueRouter.get("/:id/verification", requireAuth, verificationSummary);
+issueRouter.get("/:id/priority", priority);
+issueRouter.get("/:id", getIssue);

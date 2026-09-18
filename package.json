@@ -1,0 +1,14 @@
+{
+  "name": "civicfix",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "backend": "npm run dev --prefix backend",
+    "admin": "npm run dev --prefix admin",
+    "mobile": "npm run start --prefix mobile",
+    "build:backend": "npm run build --prefix backend",
+    "build:admin": "npm run build --prefix admin",
+    "lint:backend": "npm run lint --prefix backend",
+    "lint:admin": "npm run lint --prefix admin"
+  }
+}
