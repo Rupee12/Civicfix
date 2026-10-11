@@ -11,9 +11,6 @@ describe("Phase 4A status transitions", () => {
     assert.equal(isValidStatusTransition("ASSIGNED", "IN_PROGRESS"), true);
     assert.equal(isValidStatusTransition("IN_PROGRESS", "RESOLVED"), true);
     assert.equal(isValidStatusTransition("RESOLVED", "VERIFICATION_PENDING"), true);
-    assert.equal(isValidStatusTransition("VERIFICATION_PENDING", "CLOSED"), true);
-    assert.equal(isValidStatusTransition("VERIFICATION_PENDING", "REOPENED"), true);
-    assert.equal(isValidStatusTransition("REOPENED", "IN_PROGRESS"), true);
   });
 
   it("rejects arbitrary jumps and terminal re-entry", () => {

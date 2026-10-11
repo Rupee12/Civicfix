@@ -10,6 +10,17 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({ email, password });
+export const profileUpdateSchema = z.object({ name: z.string().trim().min(2).max(100) });
+export const passwordChangeSchema = z.object({
+  currentPassword: password,
+  newPassword: password,
+  confirmPassword: password,
+}).refine((value) => value.newPassword === value.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;

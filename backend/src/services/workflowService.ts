@@ -9,7 +9,7 @@ import { publicIssue, recalculateIssuePriority } from "./issueService.js";
 import type { AssignmentInput, AuthorityQueueInput, StatusUpdateInput } from "../validators/workflowValidators.js";
 import type { IssueStatus } from "../types/issue.js";
 
-const transitions: Partial<Record<IssueStatus, readonly IssueStatus[]>> = { REPORTED: ["UNDER_REVIEW"], UNDER_REVIEW: ["VERIFIED", "REJECTED"], VERIFIED: ["ASSIGNED"], ASSIGNED: ["IN_PROGRESS"], IN_PROGRESS: ["RESOLVED"], RESOLVED: ["VERIFICATION_PENDING"], VERIFICATION_PENDING: ["CLOSED", "REOPENED"], REOPENED: ["IN_PROGRESS"] };
+const transitions: Partial<Record<IssueStatus, readonly IssueStatus[]>> = { REPORTED: ["UNDER_REVIEW"], UNDER_REVIEW: ["VERIFIED", "REJECTED"], VERIFIED: ["ASSIGNED"], ASSIGNED: ["IN_PROGRESS"], IN_PROGRESS: ["RESOLVED"], RESOLVED: ["VERIFICATION_PENDING"] };
 function ready() { if (!isDatabaseReady()) throw new ApiError(503, "Database is unavailable", "DATABASE_UNAVAILABLE"); }
 function issueId(value: string) { if (!Types.ObjectId.isValid(value)) throw new ApiError(404, "Issue not found", "ISSUE_NOT_FOUND"); return new Types.ObjectId(value); }
 export function isValidStatusTransition(fromStatus: IssueStatus, toStatus: IssueStatus) { return transitions[fromStatus]?.includes(toStatus) ?? false; }
@@ -34,7 +34,7 @@ export async function updateIssueStatus(id: string, input: StatusUpdateInput, us
   if (user.role === "CITIZEN") throw new ApiError(403, "Citizens cannot update workflow status", "FORBIDDEN");
   if (user.role === "AUTHORITY" && (!issue.assignedTo || issue.assignedTo.toString() !== user._id.toString())) throw new ApiError(403, "Authority is not assigned to this issue", "ISSUE_ACCESS_DENIED");
   if (input.status === "ASSIGNED") throw new ApiError(400, "Use the assignment endpoint to assign an issue", "ASSIGNMENT_REQUIRED");
-  if (["RESOLVED", "VERIFICATION_PENDING", "REOPENED", "CLOSED"].includes(input.status)) throw new ApiError(400, "Resolution verification status changes are system controlled", "VERIFICATION_REQUIRED");
+  if (input.status === "RESOLVED" || input.status === "VERIFICATION_PENDING") throw new ApiError(400, "Use the resolution endpoint for resolution status changes", "RESOLUTION_REQUIRED");
   if (!isValidStatusTransition(issue.status, input.status)) throw new ApiError(400, `Invalid status transition from ${issue.status} to ${input.status}`, "INVALID_STATUS_TRANSITION");
   const history = await IssueStatusHistoryModel.create({ issueId: issue._id, fromStatus: issue.status, toStatus: input.status, changedBy: user._id, reason: input.reason }); issue.status = input.status;
   try { await issue.save(); } catch (error) { await IssueStatusHistoryModel.deleteOne({ _id: history._id }); throw error; }

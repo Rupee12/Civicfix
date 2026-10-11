@@ -16,7 +16,16 @@ const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 export const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: env.CORS_ORIGIN }));
+const configuredOrigin = new URL(env.CORS_ORIGIN);
+const allowedOrigins = new Set([env.CORS_ORIGIN]);
+if (configuredOrigin.hostname === "localhost") {
+  configuredOrigin.hostname = "127.0.0.1";
+  allowedOrigins.add(configuredOrigin.origin);
+} else if (configuredOrigin.hostname === "127.0.0.1") {
+  configuredOrigin.hostname = "localhost";
+  allowedOrigins.add(configuredOrigin.origin);
+}
+app.use(cors({ origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)) }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: "draft-8", legacyHeaders: false }));
 app.use(express.json({ limit: "1mb" }));
 app.use("/uploads", express.static(path.join(currentDirectory, "../uploads")));

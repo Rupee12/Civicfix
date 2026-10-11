@@ -11,7 +11,7 @@ export const ISSUE_CATEGORIES = [
 
 export type IssueCategory = (typeof ISSUE_CATEGORIES)[number];
 export type IssueSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-export type IssueStatus = 'REPORTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'VERIFICATION_PENDING' | 'REOPENED' | 'CLOSED';
+export type IssueStatus = 'REPORTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'VERIFICATION_PENDING' | 'CLOSED';
 export type PriorityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type SafetyImpact = 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -59,12 +59,4 @@ export interface Resolution {
   beforeMedia: { photos: { url: string }[]; videos: { url: string }[] };
   afterMedia: { photos: { url: string }[]; videos: { url: string }[] };
   completedAt: string;
-}
-
-export interface VerificationSummary {
-  resolved: number;
-  notResolved: number;
-  status: IssueStatus;
-  eligible: boolean;
-  yourVerification: { vote: 'RESOLVED' | 'NOT_RESOLVED'; comment?: string; updatedAt: string } | null;
 }

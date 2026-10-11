@@ -11,7 +11,7 @@ export const ISSUE_CATEGORIES = [
 
 export type IssueCategory = (typeof ISSUE_CATEGORIES)[number];
 
-export const ISSUE_STATUSES = ["REPORTED", "UNDER_REVIEW", "VERIFIED", "REJECTED", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "VERIFICATION_PENDING", "REOPENED", "CLOSED"] as const;
+export const ISSUE_STATUSES = ["REPORTED", "UNDER_REVIEW", "VERIFIED", "REJECTED", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "VERIFICATION_PENDING", "CLOSED"] as const;
 export type IssueStatus = (typeof ISSUE_STATUSES)[number];
 
 export const ISSUE_SEVERITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;

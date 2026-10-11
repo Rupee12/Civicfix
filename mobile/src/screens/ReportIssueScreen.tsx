@@ -28,10 +28,15 @@ export function ReportIssueScreen({ onCreated }: { onCreated: (id: string) => vo
 
   useEffect(() => { void locate(); }, []);
   async function locate() {
-    const permission = await Location.requestForegroundPermissionsAsync();
-    if (permission.status !== 'granted') { setLocationMessage('Location permission is off. You can retry below.'); return; }
-    const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-    setCoordinate({ latitude: current.coords.latitude, longitude: current.coords.longitude }); setLocationMessage('Drag the marker to adjust the report location.');
+    setLocationMessage('Finding your location...');
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== 'granted') { setLocationMessage('Location permission is off. You can retry below.'); return; }
+      const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setCoordinate({ latitude: current.coords.latitude, longitude: current.coords.longitude }); setLocationMessage('Drag the marker to adjust the report location.');
+    } catch (error) {
+      setLocationMessage(apiErrorMessage(error));
+    }
   }
   async function addPhoto(useCamera = false) {
     if (photos.length >= 5) return;
@@ -41,6 +46,10 @@ export function ReportIssueScreen({ onCreated }: { onCreated: (id: string) => vo
     if (!result.canceled) setPhotos((current) => [...current, ...result.assets].slice(0, 5));
   }
   async function submit(forceNew = false) {
+    if (loading) return;
+    if (title.trim().length < 5) { Alert.alert('Title needed', 'Add a short title with at least 5 characters.'); return; }
+    if (description.trim().length < 10) { Alert.alert('More detail needed', 'Describe the issue in at least 10 characters.'); return; }
+    if (!photos.length) { Alert.alert('Photo needed', 'Add at least one photo so the issue can be verified.'); return; }
     if (!coordinate) { Alert.alert('Location needed', 'Capture your location before submitting.'); return; }
     setLoading(true);
     try {

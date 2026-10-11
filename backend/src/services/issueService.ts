@@ -26,7 +26,7 @@ export function publicIssue(issue: IssueDocument | Record<string, unknown>) {
     priorityLevel: value.priorityLevel, priorityBreakdown: value.priorityBreakdown, priorityUpdatedAt: value.priorityUpdatedAt,
     safetyImpact: value.safetyImpact, affectedPeopleEstimate: value.affectedPeopleEstimate,
     suggestedDepartmentId: value.suggestedDepartmentId, departmentId: value.departmentId, assignedTo: value.assignedTo, assignedAt: value.assignedAt,
-    assignmentHistory: value.assignmentHistory, resolvedAt: value.resolvedAt, closedAt: value.closedAt,
+    assignmentHistory: value.assignmentHistory,
   };
 }
 

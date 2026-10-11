@@ -57,13 +57,7 @@ Backend endpoints now include:
 - `GET /api/issues/nearby` - MongoDB `$geoNear` lookup in meters, bounded to 5 km.
 - `GET /api/issues/my` - authenticated reports for the current JWT user.
 
-The mobile app uses `EXPO_PUBLIC_API_URL` for the API base URL. Expo CLI automatically loads `EXPO_PUBLIC_` variables from `.env` files during development. For a physical Android device, copy `mobile/.env.example` to `mobile/.env.local` and set:
-
-```env
-EXPO_PUBLIC_API_URL=http://<LAN_IP>:4000/api
-```
-
-Use the backend PC's currently active Wi-Fi/LAN address in `mobile/.env.local`; it can change when the PC changes networks. Restart or fully reload the app after changing the value. If `EXPO_PUBLIC_API_URL` is absent, Android emulators use the fallback `http://10.0.2.2:4000/api`. Configured URLs without a trailing `/api` are normalized to include it.
+The mobile app uses `EXPO_PUBLIC_API_URL` for the API base URL. Android emulators default to `http://10.0.2.2:4000/api`; physical devices should use the development computer's LAN IP, for example `http://192.168.1.20:4000/api`.
 
 Issue success paths require MongoDB. When MongoDB is unavailable locally, the backend remains available for health and validation/auth guards but database-backed issue operations cannot be verified.
 
@@ -158,8 +152,4 @@ Resolution APIs:
 - `GET /api/issues/:id/resolution` - resolution details and evidence.
 - `GET /api/issues/:id` - includes safe resolution information when available.
 
-Authorities can resolve only their own active `IN_PROGRESS` issues. Admins may resolve active in-progress issues. Citizens cannot submit or modify resolutions.
-
-## Phase 4C citizen verification
-
-Citizens who reported or supported an issue can verify a `VERIFICATION_PENDING` resolution through `POST /api/issues/:id/verification`; `GET /api/issues/:id/verification` returns the safe vote summary and the caller's own vote. The defaults in `backend/src/config/verificationConfig.ts` close an issue after 3 `RESOLVED` votes or return it to `IN_PROGRESS` after 2 `NOT_RESOLVED` votes. Each vote change is retained in the verification record history, and status history records `VERIFICATION_PENDING -> REOPENED -> IN_PROGRESS` or `VERIFICATION_PENDING -> CLOSED`.
+Authorities can resolve only their own active `IN_PROGRESS` issues. Admins may resolve active in-progress issues. Citizens cannot submit or modify resolutions. Citizen verification controls, `CLOSED`, reopening, verification thresholds, and automatic reopening are Phase 4C and are not implemented.

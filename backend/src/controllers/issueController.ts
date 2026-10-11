@@ -4,7 +4,6 @@ import { createIssue, getIssueById, getIssuePriority, getIssueReports, getIssueS
 import { findPotentialDuplicates } from "../services/duplicateDetectionService.js";
 import { assignIssue, authorityIssues, issueStatusHistory, updateIssueStatus } from "../services/workflowService.js";
 import { getIssueResolution, submitResolution } from "../services/resolutionService.js";
-import { getVerificationSummary, submitVerification } from "../services/verificationService.js";
 
 function filesByField(request: Express.Request, field: string) {
   const files = request.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
@@ -83,5 +82,3 @@ export const statusHistory: RequestHandler = async (request, response) => { cons
 export const authorityQueue: RequestHandler = async (request, response) => { response.json({ success: true, message: "Authority issue queue retrieved", data: await authorityIssues(request.user!.userId, request.query as never) }); };
 export const createResolution: RequestHandler = async (request, response) => { const id = Array.isArray(request.params.id) ? request.params.id[0] : request.params.id; const files = request.files as { [fieldname: string]: Express.Multer.File[] } | undefined; const result = await submitResolution(id, request.body, request.user!.userId, files?.afterPhotos ?? [], files?.afterVideos ?? []); response.status(201).json({ success: true, message: "Resolution submitted for citizen verification", data: result }); };
 export const resolution: RequestHandler = async (request, response) => { const id = Array.isArray(request.params.id) ? request.params.id[0] : request.params.id; response.json({ success: true, message: "Resolution retrieved", data: { resolution: await getIssueResolution(id) } }); };
-export const verification: RequestHandler = async (request, response) => { const id = Array.isArray(request.params.id) ? request.params.id[0] : request.params.id; response.json({ success: true, message: "Citizen verification recorded", data: await submitVerification(id, request.body, request.user!.userId) }); };
-export const verificationSummary: RequestHandler = async (request, response) => { const id = Array.isArray(request.params.id) ? request.params.id[0] : request.params.id; response.json({ success: true, message: "Citizen verification retrieved", data: await getVerificationSummary(id, request.user!.userId) }); };

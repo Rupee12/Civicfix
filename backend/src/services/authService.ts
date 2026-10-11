@@ -4,7 +4,7 @@ import { env } from "../config/env.js";
 import { UserModel, type UserDocument } from "../models/User.js";
 import type { AuthenticatedUser } from "../types/auth.js";
 import { ApiError } from "../utils/apiError.js";
-import type { LoginInput, RegisterInput } from "../validators/authValidators.js";
+import type { LoginInput, PasswordChangeInput, ProfileUpdateInput, RegisterInput } from "../validators/authValidators.js";
 
 const SALT_ROUNDS = 12;
 
@@ -40,4 +40,22 @@ export async function getCurrentUser(userId: string) {
     throw new ApiError(401, "Authenticated user is no longer active", "AUTHENTICATION_REQUIRED");
   }
   return toPublicUser(user);
+}
+
+export async function updateProfile(userId: string, input: ProfileUpdateInput) {
+  const user = await UserModel.findById(userId);
+  if (!user || !user.isActive) throw new ApiError(401, "Authenticated user is no longer active", "AUTHENTICATION_REQUIRED");
+  user.name = input.name;
+  await user.save();
+  return toPublicUser(user);
+}
+
+export async function changePassword(userId: string, input: PasswordChangeInput) {
+  const user = await UserModel.findById(userId).select("+passwordHash");
+  if (!user || !user.isActive) throw new ApiError(401, "Authenticated user is no longer active", "AUTHENTICATION_REQUIRED");
+  if (!(await bcrypt.compare(input.currentPassword, user.passwordHash))) {
+    throw new ApiError(400, "Current password is incorrect", "CURRENT_PASSWORD_INVALID");
+  }
+  user.passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
+  await user.save();
 }

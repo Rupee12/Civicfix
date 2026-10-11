@@ -1,4 +1,4 @@
-import type { DuplicateCandidate, Issue, IssueCategory, IssueSeverity, VerificationSummary } from '../types/issue';
+import type { DuplicateCandidate, Issue, IssueCategory, IssueSeverity } from '../types/issue';
 import { apiClient } from './client';
 
 export interface CreateIssueInput {
@@ -33,6 +33,11 @@ export async function getNearbyIssues(latitude: number, longitude: number) {
   return response.data.data.issues;
 }
 
+export async function getMyIssues() {
+  const response = await apiClient.get<{ data: { issues: Issue[]; pagination: { page: number; limit: number; total: number; totalPages: number } } }>('/issues/my', { params: { page: 1, limit: 50, sort: 'newest' } });
+  return response.data.data.issues;
+}
+
 export async function getIssue(id: string) {
   const response = await apiClient.get<{ data: { issue: Issue } }>(`/issues/${id}`);
   return response.data.data.issue;
@@ -40,11 +45,6 @@ export async function getIssue(id: string) {
 
 export async function login(email: string, password: string) {
   const response = await apiClient.post<{ data: { token: string; user: { role: string } } }>('/auth/login', { email, password });
-  return response.data.data;
-}
-
-export async function register(name: string, email: string, password: string) {
-  const response = await apiClient.post('/auth/register', { name, email, password });
   return response.data.data;
 }
 
@@ -78,15 +78,5 @@ export async function submitResolution(id: string, description: string, photos: 
   formData.append('description', description);
   photos.forEach((photo) => formData.append('afterPhotos', photo as unknown as Blob));
   const response = await apiClient.post<{ data: { issue: Issue; resolution: Issue['resolution'] } }>(`/issues/${id}/resolution`, formData);
-  return response.data.data;
-}
-
-export async function getVerification(id: string) {
-  const response = await apiClient.get<{ data: VerificationSummary }>(`/issues/${id}/verification`);
-  return response.data.data;
-}
-
-export async function submitVerification(id: string, vote: 'RESOLVED' | 'NOT_RESOLVED', comment?: string) {
-  const response = await apiClient.post<{ data: VerificationSummary }>(`/issues/${id}/verification`, { vote, ...(comment?.trim() ? { comment: comment.trim() } : {}) });
   return response.data.data;
 }
