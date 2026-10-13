@@ -9,16 +9,10 @@ const sessionKey = 'civicfix-admin-session'
 export class ApiClientError extends Error {
   readonly status: number
   readonly code?: string
-
-  constructor(message: string, status: number, code?: string) {
-    super(message)
-    this.status = status
-    this.code = code
-  }
+  constructor(message: string, status: number, code?: string) { super(message); this.status = status; this.code = code }
 }
 
 export function getApiBaseUrl() { return apiBaseUrl }
-
 export function getSession(): Session | undefined {
   try {
     const value = sessionStorage.getItem(sessionKey)
@@ -30,7 +24,6 @@ export function getSession(): Session | undefined {
     return undefined
   }
 }
-
 export function setSession(session: Session) { sessionStorage.setItem(sessionKey, JSON.stringify(session)) }
 export function clearSession() { sessionStorage.removeItem(sessionKey); window.dispatchEvent(new Event('civicfix:session-cleared')) }
 
@@ -39,20 +32,21 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, token?
   headers.set('Accept', 'application/json')
   if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
-
   let response: Response
-  try {
-    response = await fetch(`${apiBaseUrl}${path}`, { ...init, headers })
-  } catch {
-    throw new ApiClientError('The CivicFix API could not be reached.', 0, 'NETWORK_ERROR')
-  }
-
+  try { response = await fetch(`${apiBaseUrl}${path}`, { ...init, headers }) }
+  catch { throw new ApiClientError('The CivicFix API could not be reached.', 0, 'NETWORK_ERROR') }
   const payload = await response.json().catch(() => ({})) as { message?: string; error?: string; data?: T }
   if (!response.ok) {
     if (response.status === 401 && token) clearSession()
     throw new ApiClientError(payload.message ?? 'The CivicFix API rejected the request.', response.status, payload.error)
   }
   return payload.data as T
+}
+
+export async function downloadApiFile(path: string, token: string) {
+  const response = await fetch(`${apiBaseUrl}${path}`, { headers: { Accept: 'text/csv', Authorization: `Bearer ${token}` } })
+  if (!response.ok) throw new ApiClientError('The report could not be downloaded.', response.status)
+  return response.blob()
 }
 
 export async function login(email: string, password: string) {

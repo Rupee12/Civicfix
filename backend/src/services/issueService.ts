@@ -10,6 +10,7 @@ import type { MediaAsset } from "../types/issue.js";
 import { ApiError } from "../utils/apiError.js";
 import { calculatePriority, type PriorityResult } from "./priorityService.js";
 import { findSuggestedDepartmentId } from "./departmentService.js";
+import { ensureIssueSla } from "./slaService.js";
 
 function ensureDatabaseReady() {
   if (!isDatabaseReady()) throw new ApiError(503, "Database is unavailable", "DATABASE_UNAVAILABLE");
@@ -25,6 +26,7 @@ export function publicIssue(issue: IssueDocument | Record<string, unknown>) {
     priorityScore: value.priorityScore, supportCount: value.supportCount, reportCount: value.reportCount, createdAt: value.createdAt, updatedAt: value.updatedAt,
     priorityLevel: value.priorityLevel, priorityBreakdown: value.priorityBreakdown, priorityUpdatedAt: value.priorityUpdatedAt,
     safetyImpact: value.safetyImpact, affectedPeopleEstimate: value.affectedPeopleEstimate,
+    slaDueAt: (value.sla as { dueAt?: Date } | undefined)?.dueAt,
     suggestedDepartmentId: value.suggestedDepartmentId, departmentId: value.departmentId, assignedTo: value.assignedTo, assignedAt: value.assignedAt,
     assignmentHistory: value.assignmentHistory,
   };
@@ -55,7 +57,9 @@ export async function createIssue(input: CreateIssueInput, userId: string, photo
     issueRecord = await IssueModel.create({ ...input, reportedBy: new Types.ObjectId(userId), location, canonicalLocation: location, suggestedDepartmentId, media: { photos: photoAssets, videos: videoAssets }, reports: [], reportCount: 1, supportCount: 0, assignmentHistory: [] });
     reportRecord = await IssueReportModel.create({ issue: issueRecord._id, reportedBy: new Types.ObjectId(userId), title: input.title, description: input.description, category: input.category, location, media: { photos: photoAssets, videos: videoAssets }, severity: input.severity, reportStatus: "ACTIVE", isPrimary: true });
     await IssueModel.updateOne({ _id: issueRecord._id }, { $push: { reports: reportRecord._id } });
-    return publicIssue(await recalculateIssuePriority(issueRecord));
+    const prioritizedIssue = await recalculateIssuePriority(issueRecord);
+    await ensureIssueSla(prioritizedIssue);
+    return publicIssue(prioritizedIssue);
   } catch (error) {
     if (reportRecord) await IssueReportModel.deleteOne({ _id: reportRecord._id });
     if (issueRecord) await IssueModel.deleteOne({ _id: issueRecord._id });

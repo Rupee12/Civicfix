@@ -9,6 +9,7 @@ import { publicIssue } from "./issueService.js";
 import { ApiError } from "../utils/apiError.js";
 import type { ResolutionInput } from "../validators/workflowValidators.js";
 import type { MediaAsset } from "../types/issue.js";
+import { createNotification } from "./notificationService.js";
 
 function ready() { if (!isDatabaseReady()) throw new ApiError(503, "Database is unavailable", "DATABASE_UNAVAILABLE"); }
 function validId(value: string) { if (!Types.ObjectId.isValid(value)) throw new ApiError(404, "Issue not found", "ISSUE_NOT_FOUND"); return new Types.ObjectId(value); }
@@ -51,7 +52,9 @@ export async function submitResolution(issueId: string, input: ResolutionInput, 
     const pendingHistory = await IssueStatusHistoryModel.create({ issueId: issue._id, fromStatus: "RESOLVED", toStatus: "VERIFICATION_PENDING", changedBy: actor._id, reason: "Resolution submitted for citizen verification" }); histories.push(pendingHistory._id);
     issue.status = "VERIFICATION_PENDING";
     issue.resolvedAt = completedAt;
+    if (issue.sla) issue.sla.completedAt = completedAt;
     await issue.save();
+    await createNotification({ recipient: issue.reportedBy, type: "VERIFICATION_REQUESTED", title: "Resolution ready for verification", message: `Please review the resolution for "${issue.title}".`, relatedEntityId: issue._id, relatedEntityType: "Issue", eventKey: `verification-requested:${resolution._id}` });
     const storedResolution = await ResolutionModel.findById(resolution._id).populate("resolvedBy", "name role");
     return { issue: publicIssue(issue), resolution: publicResolution(storedResolution!) };
   } catch (error) {

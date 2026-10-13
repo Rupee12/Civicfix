@@ -7,6 +7,7 @@ import { AuthorityQueueScreen } from './src/screens/AuthorityQueueScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { IssueDetailsScreen } from './src/screens/IssueDetailsScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
+import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { MyReportsScreen } from './src/screens/MyReportsScreen';
 import { NearbyIssuesScreen } from './src/screens/NearbyIssuesScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
@@ -26,6 +27,7 @@ function CitizenTabs({ onSignOut }: { onSignOut: () => void }) {
     <Tabs.Screen name="Report">{({ navigation }) => <ReportIssueScreen onCreated={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="My Reports">{({ navigation }) => <MyReportsScreen onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="Profile">{() => <ProfileScreen role="CITIZEN" onSignOut={onSignOut} />}</Tabs.Screen>
+    <Tabs.Screen name="Notifications">{() => <NotificationsScreen />}</Tabs.Screen>
   </Tabs.Navigator>;
 }
 
@@ -56,6 +58,7 @@ export default function App() {
       <Stack.Screen name="Details" options={{ title: 'Issue details' }}>{({ navigation, route }) => <IssueDetailsScreen issueId={route.params.issueId} canResolve onResolve={() => navigation.navigate('Resolution', { issueId: route.params.issueId })} canSupport={false} />}</Stack.Screen>
       <Stack.Screen name="Resolution" options={{ title: 'Submit resolution' }}>{({ navigation, route }) => <ResolutionScreen issueId={route.params.issueId} onSubmitted={() => navigation.replace('Details', { issueId: route.params.issueId })} />}</Stack.Screen>
       <Stack.Screen name="Profile" options={{ title: 'Profile' }}>{() => <ProfileScreen role={session.role} onSignOut={signOut} />}</Stack.Screen>
+      <Stack.Screen name="Notifications" options={{ title: 'Notifications' }}>{() => <NotificationsScreen />}</Stack.Screen>
     </> : <>
       <Stack.Screen name="Tabs" options={{ headerShown: false }}>{() => <CitizenTabs onSignOut={signOut} />}</Stack.Screen>
       <Stack.Screen name="Details" options={{ title: 'Issue details' }}>{({ route }) => <IssueDetailsScreen issueId={route.params.issueId} />}</Stack.Screen>

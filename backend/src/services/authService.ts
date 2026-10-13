@@ -9,7 +9,7 @@ import type { LoginInput, PasswordChangeInput, ProfileUpdateInput, RegisterInput
 const SALT_ROUNDS = 12;
 
 function toPublicUser(user: UserDocument) {
-  return { id: user.id, name: user.name, email: user.email, role: user.role };
+  return { id: user.id, name: user.name, email: user.email, phone: user.phone, departmentId: user.departmentId, role: user.role };
 }
 
 export async function registerUser(input: RegisterInput) {
@@ -46,6 +46,7 @@ export async function updateProfile(userId: string, input: ProfileUpdateInput) {
   const user = await UserModel.findById(userId);
   if (!user || !user.isActive) throw new ApiError(401, "Authenticated user is no longer active", "AUTHENTICATION_REQUIRED");
   user.name = input.name;
+  user.phone = input.phone || undefined;
   await user.save();
   return toPublicUser(user);
 }

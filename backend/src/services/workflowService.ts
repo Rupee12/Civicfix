@@ -8,6 +8,8 @@ import { ApiError } from "../utils/apiError.js";
 import { publicIssue, recalculateIssuePriority } from "./issueService.js";
 import type { AssignmentInput, AuthorityQueueInput, StatusUpdateInput } from "../validators/workflowValidators.js";
 import type { IssueStatus } from "../types/issue.js";
+import { createNotification } from "./notificationService.js";
+import { ensureIssueSla } from "./slaService.js";
 
 const transitions: Partial<Record<IssueStatus, readonly IssueStatus[]>> = { REPORTED: ["UNDER_REVIEW"], UNDER_REVIEW: ["VERIFIED", "REJECTED"], VERIFIED: ["ASSIGNED"], ASSIGNED: ["IN_PROGRESS"], IN_PROGRESS: ["RESOLVED"], RESOLVED: ["VERIFICATION_PENDING"] };
 function ready() { if (!isDatabaseReady()) throw new ApiError(503, "Database is unavailable", "DATABASE_UNAVAILABLE"); }
@@ -26,6 +28,8 @@ export async function assignIssue(id: string, input: AssignmentInput, adminId: s
   const statusHistory = firstAssignment ? await IssueStatusHistoryModel.create({ issueId: issue._id, fromStatus: issue.status, toStatus: "ASSIGNED", changedBy: admin._id, reason: input.reason }) : undefined;
   issue.departmentId = department._id; issue.assignedTo = authority._id; issue.assignedAt = new Date(); issue.assignmentHistory = issue.assignmentHistory ?? []; issue.assignmentHistory.push({ departmentId: department._id, assignedTo: authority._id, assignedBy: admin._id, assignedAt: new Date(), reason: input.reason }); if (firstAssignment) issue.status = "ASSIGNED";
   try { await issue.save(); } catch (error) { if (statusHistory) await IssueStatusHistoryModel.deleteOne({ _id: statusHistory._id }); throw error; }
+  await ensureIssueSla(issue);
+  await createNotification({ recipient: authority._id, type: "ISSUE_ASSIGNED", title: "Issue assigned to you", message: `Issue ${issue.title} is now assigned to your queue.`, relatedEntityId: issue._id, relatedEntityType: "Issue", eventKey: `assigned:${issue._id}:${issue.assignedAt?.getTime()}` });
   return publicIssue(issue);
 }
 
@@ -38,6 +42,11 @@ export async function updateIssueStatus(id: string, input: StatusUpdateInput, us
   if (!isValidStatusTransition(issue.status, input.status)) throw new ApiError(400, `Invalid status transition from ${issue.status} to ${input.status}`, "INVALID_STATUS_TRANSITION");
   const history = await IssueStatusHistoryModel.create({ issueId: issue._id, fromStatus: issue.status, toStatus: input.status, changedBy: user._id, reason: input.reason }); issue.status = input.status;
   try { await issue.save(); } catch (error) { await IssueStatusHistoryModel.deleteOne({ _id: history._id }); throw error; }
+  if (input.status === "CLOSED") {
+    if (issue.sla) issue.sla.completedAt = new Date();
+  }
+  await createNotification({ recipient: issue.reportedBy, type: "STATUS_CHANGED", title: "Issue status updated", message: `The status of "${issue.title}" is now ${input.status.replaceAll("_", " ").toLowerCase()}.`, relatedEntityId: issue._id, relatedEntityType: "Issue", eventKey: `status:${history._id}` });
+  if (input.status === "IN_PROGRESS" && issue.assignedTo) await createNotification({ recipient: issue.assignedTo, type: "STATUS_CHANGED", title: "Assigned issue status changed", message: `The status of "${issue.title}" is now in progress.`, relatedEntityId: issue._id, relatedEntityType: "Issue", eventKey: `authority-status:${history._id}` });
   return publicIssue(issue);
 }
 

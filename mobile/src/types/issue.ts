@@ -35,6 +35,7 @@ export interface Issue {
   assignedTo?: string;
   assignedAt?: string;
   resolvedAt?: string;
+  slaDueAt?: string;
   resolution?: Resolution;
   createdAt: string;
   distanceMeters?: number;

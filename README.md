@@ -138,6 +138,22 @@ The explicit `npm run seed --prefix backend` command creates fictional departmen
 8. Authority dashboard, maps, and analytics
 9. Security hardening, seed data, tests, and production documentation
 
+## Notifications, SLA, and reporting
+
+Authenticated users can use `GET /api/notifications`, `PATCH /api/notifications/:id/read`, and `PATCH /api/notifications/read-all`. Notification records are owned by the recipient and use an idempotent workflow event key.
+
+Issue SLAs are calculated in UTC from the persisted issue creation time using the priority targets in `backend/src/config/slaConfig.ts`: critical 24 hours, high 72 hours, medium 168 hours, and low 336 hours. Closed and rejected issues stop the clock; reopening preserves the original SLA record. `GET /api/sla/issues/:id` returns permitted SLA details and `POST /api/sla/process` (admin only) processes overdue issues idempotently. Deployments should invoke the process endpoint from an external scheduler (for example, a Render Cron Job or an approved scheduler) because the web process itself is not a durable job runner.
+
+Administrators configure new SLA targets with `GET/PATCH /api/sla/configuration`. Values are persisted in the singleton `SlaConfiguration` MongoDB document, validated from 1 through 8,760 hours, and do not rewrite deadlines already stored on existing issues. The included Render blueprint defines a `civicfix-sla-processor` Cron Job running every 15 minutes. Set these variables in both the web service and Cron Job: `CIVICFIX_API_URL` (for example, `https://civicfix-api-22p5.onrender.com` without `/api`) and the same randomly generated `SLA_CRON_SECRET` (at least 32 characters). The Cron Job sends:
+
+```powershell
+node -e "fetch(process.env.CIVICFIX_API_URL + '/api/sla/process',{method:'POST',headers:{'x-sla-cron-secret':process.env.SLA_CRON_SECRET}}).then(async r=>{console.log(r.status,await r.text());if(!r.ok)process.exit(1)}).catch(e=>{console.error(e);process.exit(1)})"
+```
+
+The endpoint accepts either an active admin JWT or the constant-time checked scheduler secret; requests without either credential are rejected. Repeated calls are safe because warning notifications use unique event keys and escalation claims use an atomic SLA-level update plus a unique `(issueId, level)` index.
+
+Administrators can download filtered issue CSV data from `GET /api/admin/reports/export`. The export is authorization-protected, capped at 10,000 rows, escapes CSV values, and prefixes formula-like values to reduce spreadsheet injection risk.
+
 ## Phase 4B authority resolution
 
 Phase 4B extends the authority workflow:

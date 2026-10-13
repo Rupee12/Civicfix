@@ -20,6 +20,8 @@ services:
         sync: false
       - key: JWT_EXPIRES_IN
         value: 7d
+      - key: SLA_CRON_SECRET
+        sync: false
       - key: CORS_ORIGINS
         sync: false
       - key: MEDIA_STORAGE
@@ -29,6 +31,24 @@ services:
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  - type: cron
+    name: civicfix-sla-processor
+    runtime: node
+    plan: free
+    rootDir: backend
+    schedule: "*/15 * * * *"
+    buildCommand: npm ci --include=dev
+    startCommand: >-
+      node -e "fetch(process.env.CIVICFIX_API_URL + '/api/sla/process',
+      {method:'POST',headers:{'x-sla-cron-secret':process.env.SLA_CRON_SECRET}})
+      .then(async r => { console.log(r.status, await r.text()); if (!r.ok) process.exit(1) })
+      .catch(e => { console.error(e); process.exit(1) })"
+    envVars:
+      - key: CIVICFIX_API_URL
+        sync: false
+      - key: SLA_CRON_SECRET
         sync: false
 
   - type: web

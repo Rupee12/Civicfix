@@ -78,6 +78,11 @@ export async function getIssuePriority(id: string) {
   return response.data.data;
 }
 
+export async function getIssueSla(id: string) {
+  const response = await apiClient.get<{ data: { sla: { dueAt: string; breachedAt?: string; escalationLevel: number } | null; status: string } }>(`/sla/issues/${id}`);
+  return response.data.data;
+}
+
 export async function getAuthorityIssues() {
   const response = await apiClient.get<{ data: { issues: Issue[] } }>('/authority/issues');
   return response.data.data.issues;

@@ -10,7 +10,7 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({ email, password });
-export const profileUpdateSchema = z.object({ name: z.string().trim().min(2).max(100) });
+export const profileUpdateSchema = z.object({ name: z.string().trim().min(2).max(100), phone: z.string().trim().max(30).optional() });
 export const passwordChangeSchema = z.object({
   currentPassword: password,
   newPassword: password,

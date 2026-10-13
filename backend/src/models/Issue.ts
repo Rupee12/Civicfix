@@ -34,6 +34,15 @@ export interface Issue {
   resolution?: { description: string; photos: MediaAsset[]; completedAt?: Date };
   resolvedAt?: Date;
   closedAt?: Date;
+  sla?: {
+    targetHours: number;
+    startedAt: Date;
+    dueAt: Date;
+    completedAt?: Date;
+    breachedAt?: Date;
+    escalationLevel: number;
+    lastEscalatedAt?: Date;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -88,6 +97,15 @@ const issueSchema = new Schema<Issue>(
     resolution: { description: String, photos: { type: [mediaAssetSchema], default: [] }, completedAt: Date },
     resolvedAt: Date,
     closedAt: Date,
+    sla: {
+      targetHours: { type: Number, required: true },
+      startedAt: { type: Date, required: true },
+      dueAt: { type: Date, required: true, index: true },
+      completedAt: Date,
+      breachedAt: Date,
+      escalationLevel: { type: Number, default: 0 },
+      lastEscalatedAt: Date,
+    },
   },
   { timestamps: true },
 );

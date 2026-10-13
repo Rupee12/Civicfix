@@ -11,6 +11,8 @@ import { adminRouter } from "./routes/adminRoutes.js";
 import { authorityRouter } from "./routes/authorityRoutes.js";
 import { issueRouter } from "./routes/issueRoutes.js";
 import { isDatabaseReady } from "./config/database.js";
+import { notificationRouter } from "./routes/notificationRoutes.js";
+import { slaRouter } from "./routes/slaRoutes.js";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -55,6 +57,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/authority", authorityRouter);
 app.use("/api/issues", issueRouter);
+app.use("/api/notifications", notificationRouter);
+app.use("/api/sla", slaRouter);
 
 app.use((_request, response) => {
   response.status(404).json({

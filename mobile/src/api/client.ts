@@ -34,8 +34,15 @@ export async function register(name: string, email: string, password: string) {
   return response.data.data.user;
 }
 export async function getCurrentUser() {
-  const response = await apiClient.get<{ data: { id: string; name: string; email: string; role: string } }>('/auth/me');
+  const response = await apiClient.get<{ data: { id: string; name: string; email: string; phone?: string; role: string } }>('/auth/me');
   return response.data.data;
+}
+export async function updateProfile(name: string, phone?: string) {
+  const response = await apiClient.patch<{ data: { user: { id: string; name: string; email: string; role: string; phone?: string } } }>('/auth/me', { name, phone });
+  return response.data.data.user;
+}
+export async function changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
+  await apiClient.patch('/auth/me/password', { currentPassword, newPassword, confirmPassword });
 }
 
 export function apiErrorMessage(error: unknown) {

@@ -4,6 +4,7 @@ export type RootStackParamList = {
   SignUp: undefined;
   Tabs: undefined;
   Profile: undefined;
+  Notifications: undefined;
   Nearby: undefined;
   AuthorityQueue: undefined;
   Report: undefined;

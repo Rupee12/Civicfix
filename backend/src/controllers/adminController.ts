@@ -7,6 +7,8 @@ import { PRIORITY_LEVELS } from "../types/issue.js";
 import { createAuthority, createDepartment, listAuthorities, listDepartments, updateAuthority, updateDepartment } from "../services/departmentService.js";
 import type { RequestHandler } from "express";
 import type { AnalyticsQuery } from "../validators/analyticsValidators.js";
+import type { ReportQuery } from "../validators/analyticsValidators.js";
+import { csvValue } from "../utils/csv.js";
 
 export const prioritySummary: RequestHandler = async (request, response) => {
   if (!isDatabaseReady()) throw new ApiError(503, "Database is unavailable", "DATABASE_UNAVAILABLE");
@@ -53,7 +55,7 @@ export const analytics: RequestHandler = async (request, response) => {
   const { days } = request.query as unknown as AnalyticsQuery;
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const dateFormat = "%Y-%m-%d";
-  const [totals, statuses, categories, severities, priorities, trend, resolution, hotspots] = await Promise.all([
+  const [totals, statuses, categories, severities, priorities, trend, resolution, hotspots, sla] = await Promise.all([
     IssueModel.aggregate([{ $match: { createdAt: { $gte: since } } }, { $count: "count" }]),
     IssueModel.aggregate([{ $match: { createdAt: { $gte: since } } }, { $group: { _id: "$status", count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
     IssueModel.aggregate([{ $match: { createdAt: { $gte: since } } }, { $group: { _id: "$category", count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
@@ -62,6 +64,19 @@ export const analytics: RequestHandler = async (request, response) => {
     IssueModel.aggregate([{ $match: { createdAt: { $gte: since } } }, { $group: { _id: { $dateToString: { format: dateFormat, date: "$createdAt", timezone: "UTC" } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
     IssueModel.aggregate([{ $match: { createdAt: { $gte: since }, resolvedAt: { $type: "date" } } }, { $group: { _id: null, averageMs: { $avg: { $subtract: ["$resolvedAt", "$createdAt"] } }, count: { $sum: 1 } } }]),
     IssueModel.aggregate([{ $match: { createdAt: { $gte: since }, "location.coordinates": { $size: 2 } } }, { $project: { latitude: { $arrayElemAt: ["$location.coordinates", 1] }, longitude: { $arrayElemAt: ["$location.coordinates", 0] } } }, { $project: { latitude: { $round: ["$latitude", 2] }, longitude: { $round: ["$longitude", 2] } } }, { $group: { _id: { latitude: "$latitude", longitude: "$longitude" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }]),
+    IssueModel.aggregate([
+      { $match: { createdAt: { $gte: since } } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: { $sum: { $cond: [{ $in: ["$status", ["CLOSED", "REJECTED"]] }, 1, 0] } },
+          breached: { $sum: { $cond: [{ $ne: [{ $ifNull: ["$sla.breachedAt", null] }, null] }, 1, 0] } },
+          escalated: { $sum: { $cond: [{ $gt: [{ $ifNull: ["$sla.escalationLevel", 0] }, 0] }, 1, 0] } },
+          onTime: { $sum: { $cond: [{ $and: [{ $ne: [{ $ifNull: ["$sla.completedAt", null] }, null] }, { $lte: ["$sla.completedAt", "$sla.dueAt"] }] }, 1, 0] } },
+        },
+      },
+    ]),
   ]);
   const resolutionSummary = resolution[0] as { averageMs?: number; count?: number } | undefined;
   response.json({
@@ -76,7 +91,23 @@ export const analytics: RequestHandler = async (request, response) => {
       byPriority: priorities,
       trend,
       resolution: resolutionSummary ? { averageMs: resolutionSummary.averageMs, sampleSize: resolutionSummary.count } : null,
+      sla: { complianceRate: sla[0]?.total ? (sla[0].onTime / sla[0].total) * 100 : 0, breachRate: sla[0]?.total ? (sla[0].breached / sla[0].total) * 100 : 0, escalated: sla[0]?.escalated ?? 0, completed: sla[0]?.completed ?? 0 },
       hotspots: hotspots.map((item) => ({ latitude: item._id.latitude, longitude: item._id.longitude, count: item.count })),
     },
   });
+};
+
+export const reportExport: RequestHandler = async (request, response) => {
+  if (!isDatabaseReady()) throw new ApiError(503, "Database is unavailable", "DATABASE_UNAVAILABLE");
+  const query = request.query as unknown as ReportQuery;
+  const createdAt: Record<string, Date> = {};
+  if (query.startDate) createdAt.$gte = query.startDate;
+  if (query.endDate) { const end = new Date(query.endDate); end.setUTCHours(23, 59, 59, 999); createdAt.$lte = end; }
+  const filter = { ...(Object.keys(createdAt).length ? { createdAt } : {}), ...(query.status ? { status: query.status } : {}), ...(query.priorityLevel ? { priorityLevel: query.priorityLevel } : {}), ...(query.category ? { category: query.category } : {}), ...(query.departmentId ? { departmentId: query.departmentId } : {}), ...(query.assignedTo ? { assignedTo: query.assignedTo } : {}) };
+  const issues = await IssueModel.find(filter).sort({ createdAt: -1 }).limit(10000).populate("assignedTo", "name email").populate("departmentId", "name").lean();
+  const header = ["issueId", "title", "category", "status", "priority", "department", "assignee", "createdAt", "resolvedAt"];
+  const rows = issues.map((issue) => [issue._id, issue.title, issue.category, issue.status, issue.priorityLevel, (issue.departmentId as { name?: string } | null)?.name, (issue.assignedTo as { name?: string } | null)?.name, issue.createdAt?.toISOString(), issue.resolvedAt?.toISOString()].map(csvValue).join(","));
+  response.setHeader("Content-Type", "text/csv; charset=utf-8");
+  response.setHeader("Content-Disposition", `attachment; filename="civicfix-report-${new Date().toISOString().slice(0, 10)}.csv"`);
+  response.send([header.join(","), ...rows].join("\r\n"));
 };

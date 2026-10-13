@@ -9,6 +9,7 @@ import { IssueVerificationModel, type VerificationVote } from "../models/IssueVe
 import { UserModel } from "../models/User.js";
 import { ApiError } from "../utils/apiError.js";
 import type { VerificationInput } from "../validators/workflowValidators.js";
+import { createNotification } from "./notificationService.js";
 
 function ready() { if (!isDatabaseReady()) throw new ApiError(503, "Database is unavailable", "DATABASE_UNAVAILABLE"); }
 function issueId(value: string) { if (!Types.ObjectId.isValid(value)) throw new ApiError(404, "Issue not found", "ISSUE_NOT_FOUND"); return new Types.ObjectId(value); }
@@ -73,6 +74,9 @@ export async function submitVerification(id: string, input: VerificationInput, u
   }
   const result = await summary(issueObjectId, userObjectId);
   const updatedIssue = await applyThreshold(issueObjectId, userObjectId, result.resolved, result.notResolved);
+  if (updatedIssue?.status === "IN_PROGRESS" && updatedIssue.assignedTo) {
+    await createNotification({ recipient: updatedIssue.assignedTo, type: "ISSUE_REOPENED", title: "Issue reopened", message: `Citizen verification reopened "${updatedIssue.title}".`, relatedEntityId: updatedIssue._id, relatedEntityType: "Issue", eventKey: `reopened:${updatedIssue._id}:${updatedIssue.updatedAt.getTime()}` });
+  }
   return { ...result, status: updatedIssue?.status ?? issue.status };
 }
 
