@@ -41,7 +41,7 @@ export interface Issue {
 export type IssueDocument = HydratedDocument<Issue>;
 
 const mediaAssetSchema = new Schema<MediaAsset>(
-  { url: { type: String, required: true }, mimeType: { type: String, required: true }, originalName: { type: String, required: true }, size: { type: Number, required: true } },
+  { url: { type: String, required: true }, mimeType: { type: String, required: true }, originalName: { type: String, required: true }, size: { type: Number, required: true }, providerId: String },
   { _id: false },
 );
 

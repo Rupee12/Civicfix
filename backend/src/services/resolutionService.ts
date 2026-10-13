@@ -4,7 +4,7 @@ import { ResolutionModel, type ResolutionDocument } from "../models/Resolution.j
 import { IssueStatusHistoryModel } from "../models/IssueStatusHistory.js";
 import { UserModel } from "../models/User.js";
 import { isDatabaseReady } from "../config/database.js";
-import { mediaStorageService } from "./mediaStorageService.js";
+import { mediaStorageService, publicMedia } from "./mediaStorageService.js";
 import { publicIssue } from "./issueService.js";
 import { ApiError } from "../utils/apiError.js";
 import type { ResolutionInput } from "../validators/workflowValidators.js";
@@ -14,7 +14,7 @@ function ready() { if (!isDatabaseReady()) throw new ApiError(503, "Database is 
 function validId(value: string) { if (!Types.ObjectId.isValid(value)) throw new ApiError(404, "Issue not found", "ISSUE_NOT_FOUND"); return new Types.ObjectId(value); }
 function publicResolution(resolution: ResolutionDocument | Record<string, unknown>) {
   const value = resolution instanceof ResolutionModel ? resolution.toObject() : resolution;
-  return { id: String(value._id), issueId: String(value.issueId), resolvedBy: value.resolvedBy, description: value.description, beforeMedia: value.beforeMedia, afterMedia: value.afterMedia, completedAt: value.completedAt, createdAt: value.createdAt, updatedAt: value.updatedAt };
+  return { id: String(value._id), issueId: String(value.issueId), resolvedBy: value.resolvedBy, description: value.description, beforeMedia: publicMedia(value.beforeMedia as { photos: MediaAsset[]; videos: MediaAsset[] }), afterMedia: publicMedia(value.afterMedia as { photos: MediaAsset[]; videos: MediaAsset[] }), completedAt: value.completedAt, createdAt: value.createdAt, updatedAt: value.updatedAt };
 }
 
 export function canResolveIssue(role: string, actorId: string, assignedTo: Types.ObjectId | undefined, isActive: boolean, status: string) {
@@ -43,8 +43,8 @@ export async function submitResolution(issueId: string, input: ResolutionInput, 
   let resolution: ResolutionDocument | undefined;
   const histories: Types.ObjectId[] = [];
   try {
-    for (const file of afterPhotos) uploadedPhotos.push(await mediaStorageService.uploadImage(file));
-    for (const file of afterVideos) uploadedVideos.push(await mediaStorageService.uploadVideo(file));
+    for (const file of afterPhotos) uploadedPhotos.push(await mediaStorageService.uploadImage(file, "resolutions"));
+    for (const file of afterVideos) uploadedVideos.push(await mediaStorageService.uploadVideo(file, "resolutions"));
     const completedAt = new Date();
     resolution = await ResolutionModel.create({ issueId: issue._id, resolvedBy: actor._id, description: input.description, beforeMedia: issue.media, afterMedia: { photos: uploadedPhotos, videos: uploadedVideos }, completedAt });
     const resolvedHistory = await IssueStatusHistoryModel.create({ issueId: issue._id, fromStatus: "IN_PROGRESS", toStatus: "RESOLVED", changedBy: actor._id, changedAt: completedAt, reason: input.description }); histories.push(resolvedHistory._id);

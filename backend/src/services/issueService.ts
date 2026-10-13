@@ -3,7 +3,7 @@ import { isDatabaseReady } from "../config/database.js";
 import { IssueModel, type IssueDocument } from "../models/Issue.js";
 import { IssueReportModel } from "../models/IssueReport.js";
 import { IssueSupportModel } from "../models/IssueSupport.js";
-import { mediaStorageService } from "./mediaStorageService.js";
+import { mediaStorageService, publicMedia } from "./mediaStorageService.js";
 import type { CreateIssueInput, ListIssuesInput, NearbyIssuesInput } from "../validators/issueValidators.js";
 import type { SupportIssueInput } from "../validators/duplicateValidators.js";
 import type { MediaAsset } from "../types/issue.js";
@@ -21,7 +21,7 @@ export function publicIssue(issue: IssueDocument | Record<string, unknown>) {
   return {
     id: String(value._id), title: value.title, description: value.description, category: value.category,
     subcategory: value.subcategory, reportedBy: value.reportedBy, location: { latitude: location.coordinates[1], longitude: location.coordinates[0] },
-    address: value.address, area: value.area, city: value.city, media: value.media, status: value.status, severity: value.severity,
+    address: value.address, area: value.area, city: value.city, media: publicMedia(value.media as { photos: MediaAsset[]; videos: MediaAsset[] }), status: value.status, severity: value.severity,
     priorityScore: value.priorityScore, supportCount: value.supportCount, reportCount: value.reportCount, createdAt: value.createdAt, updatedAt: value.updatedAt,
     priorityLevel: value.priorityLevel, priorityBreakdown: value.priorityBreakdown, priorityUpdatedAt: value.priorityUpdatedAt,
     safetyImpact: value.safetyImpact, affectedPeopleEstimate: value.affectedPeopleEstimate,

@@ -14,7 +14,7 @@ export interface Resolution {
 
 export type ResolutionDocument = HydratedDocument<Resolution>;
 
-const mediaAssetSchema = new Schema<MediaAsset>({ url: String, mimeType: String, originalName: String, size: Number }, { _id: false });
+const mediaAssetSchema = new Schema<MediaAsset>({ url: String, mimeType: String, originalName: String, size: Number, providerId: String }, { _id: false });
 const resolutionSchema = new Schema<Resolution>({
   issueId: { type: Schema.Types.ObjectId, ref: "Issue", required: true, index: true },
   resolvedBy: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },

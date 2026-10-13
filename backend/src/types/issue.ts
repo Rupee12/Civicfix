@@ -36,4 +36,5 @@ export interface MediaAsset {
   mimeType: string;
   originalName: string;
   size: number;
+  providerId?: string;
 }

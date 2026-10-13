@@ -10,13 +10,10 @@ const environmentSchema = z.object({
   JWT_EXPIRES_IN: z.string().min(1).default("7d"),
   CORS_ORIGIN: z.string().url().default("http://localhost:5173"),
   CORS_ORIGINS: z.string().optional(),
-  MEDIA_STORAGE: z.enum(["local", "s3"]).default("local"),
-  S3_BUCKET: z.string().min(1).optional(),
-  S3_REGION: z.string().min(1).default("auto"),
-  S3_ENDPOINT: z.string().url().optional(),
-  S3_ACCESS_KEY_ID: z.string().min(1).optional(),
-  S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-  MEDIA_PUBLIC_BASE_URL: z.string().url().optional(),
+  MEDIA_STORAGE: z.enum(["local", "cloudinary"]).default("local"),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
+  CLOUDINARY_API_KEY: z.string().min(1).optional(),
+  CLOUDINARY_API_SECRET: z.string().min(1).optional(),
 });
 
 const parsedEnvironment = environmentSchema.safeParse(process.env);
@@ -28,8 +25,12 @@ if (!parsedEnvironment.success) {
   throw new Error(`Invalid environment configuration: ${details}`);
 }
 
-if (parsedEnvironment.data.MEDIA_STORAGE === "s3" && (!parsedEnvironment.data.S3_BUCKET || !parsedEnvironment.data.S3_ACCESS_KEY_ID || !parsedEnvironment.data.S3_SECRET_ACCESS_KEY || !parsedEnvironment.data.MEDIA_PUBLIC_BASE_URL)) {
-  throw new Error("S3 media storage requires S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and MEDIA_PUBLIC_BASE_URL");
+if (parsedEnvironment.data.NODE_ENV === "production" && parsedEnvironment.data.MEDIA_STORAGE !== "cloudinary") {
+  throw new Error("Production requires MEDIA_STORAGE=cloudinary; local media storage is not durable.");
+}
+
+if (parsedEnvironment.data.MEDIA_STORAGE === "cloudinary" && (!parsedEnvironment.data.CLOUDINARY_CLOUD_NAME || !parsedEnvironment.data.CLOUDINARY_API_KEY || !parsedEnvironment.data.CLOUDINARY_API_SECRET)) {
+  throw new Error("Cloudinary media storage requires CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET");
 }
 
 export const env = parsedEnvironment.data;

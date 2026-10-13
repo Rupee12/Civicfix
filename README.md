@@ -159,9 +159,9 @@ Authorities can resolve only their own active `IN_PROGRESS` issues. Admins may r
 The repository includes [`render.yaml`](./render.yaml) as a deployment blueprint for a Render API service and static admin site. It does not contain credentials and cannot deploy by itself.
 
 1. Create a MongoDB Atlas project and a dedicated application database user with read/write access only to the CivicFix database. Allow the selected hosting provider's outbound access in Atlas network access. Prefer the provider's documented static egress IPs; do not use `0.0.0.0/0` unless it is a temporary, explicitly accepted development trade-off.
-2. Create an S3-compatible bucket (AWS S3 or Cloudflare R2) for media. Configure private credentials with access limited to that bucket and set its public media/CDN base URL in `MEDIA_PUBLIC_BASE_URL`. The backend stores object URLs in MongoDB; it does not depend on ephemeral server disk when `MEDIA_STORAGE=s3`.
+2. Create a Cloudinary account and obtain the cloud name, API key, and API secret. Configure these only in the backend/hosting provider secret manager. Cloudinary stores issue and resolution media durably; the API secret must never be exposed to mobile or admin builds.
 3. Create a Render Blueprint from `render.yaml`. Fill every `sync: false` value in Render's secret/environment interface:
-   `MONGODB_URI`, `JWT_SECRET`, `CORS_ORIGINS`, `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `MEDIA_PUBLIC_BASE_URL`, and the admin `VITE_API_URL`.
+   `MONGODB_URI`, `JWT_SECRET`, `CORS_ORIGINS`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, and the admin `VITE_API_URL`. Keep `MEDIA_STORAGE=cloudinary` in production; production startup rejects local storage.
 4. Set `CORS_ORIGINS` to the exact HTTPS admin origin(s), comma-separated. Mobile requests do not send a browser Origin and do not require a mobile CORS entry.
 5. After deployment, verify `https://<api-host>/api/health` returns HTTP 200 with `"database":"connected"`. A 503 response means the service is running but MongoDB is not ready.
 

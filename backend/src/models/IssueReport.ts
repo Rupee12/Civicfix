@@ -19,7 +19,7 @@ export interface IssueReport {
 export type IssueReportDocument = HydratedDocument<IssueReport>;
 
 const mediaAssetSchema = new Schema<MediaAsset>(
-  { url: String, mimeType: String, originalName: String, size: Number },
+  { url: String, mimeType: String, originalName: String, size: Number, providerId: String },
   { _id: false },
 );
 

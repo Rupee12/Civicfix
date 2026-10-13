@@ -23,18 +23,12 @@ services:
       - key: CORS_ORIGINS
         sync: false
       - key: MEDIA_STORAGE
-        value: s3
-      - key: S3_BUCKET
+        value: cloudinary
+      - key: CLOUDINARY_CLOUD_NAME
         sync: false
-      - key: S3_REGION
-        value: auto
-      - key: S3_ENDPOINT
+      - key: CLOUDINARY_API_KEY
         sync: false
-      - key: S3_ACCESS_KEY_ID
-        sync: false
-      - key: S3_SECRET_ACCESS_KEY
-        sync: false
-      - key: MEDIA_PUBLIC_BASE_URL
+      - key: CLOUDINARY_API_SECRET
         sync: false
 
   - type: web
