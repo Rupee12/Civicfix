@@ -2,8 +2,8 @@ import { app } from "./app.js";
 import { closeDatabase, connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
 
-const server = app.listen(env.PORT, () => {
-  console.log(`CivicFix API listening on http://localhost:${env.PORT}`);
+const server = app.listen(env.PORT, env.HOST, () => {
+  console.log(`CivicFix API listening on ${env.HOST}:${env.PORT}`);
 });
 
 void connectDatabase();

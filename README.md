@@ -6,7 +6,7 @@ CivicFix is a civic issue lifecycle platform: report, verify, detect duplicates,
 
 - `backend/` - Express 5 + TypeScript API with MongoDB-backed authentication and `GET /api/health`.
 - `admin/` - React + Vite + TypeScript authority dashboard foundation.
-- `mobile/` - Expo SDK 57 + React Native + TypeScript citizen app foundation.
+- `mobile/` - Expo SDK 57 + React Native + TypeScript citizen app.
 
 ## Prerequisites
 
@@ -110,7 +110,7 @@ Phase 4A adds dynamic departments, authority officers, department membership, au
 
 `REPORTED -> UNDER_REVIEW -> VERIFIED -> ASSIGNED -> IN_PROGRESS`
 
-`UNDER_REVIEW -> REJECTED` is also supported. `ASSIGNED` must be reached through the admin assignment endpoint; `IN_PROGRESS` can be set by the assigned active authority or an admin. Resolution and citizen verification are not implemented yet.
+`UNDER_REVIEW -> REJECTED` is also supported. `ASSIGNED` must be reached through the admin assignment endpoint; `IN_PROGRESS` can be set by the assigned active authority or an admin. Resolution and citizen verification are implemented by the resolution and verification APIs.
 
 Workflow APIs include:
 
@@ -152,4 +152,25 @@ Resolution APIs:
 - `GET /api/issues/:id/resolution` - resolution details and evidence.
 - `GET /api/issues/:id` - includes safe resolution information when available.
 
-Authorities can resolve only their own active `IN_PROGRESS` issues. Admins may resolve active in-progress issues. Citizens cannot submit or modify resolutions. Citizen verification controls, `CLOSED`, reopening, verification thresholds, and automatic reopening are Phase 4C and are not implemented.
+Authorities can resolve only their own active `IN_PROGRESS` issues. Admins may resolve active in-progress issues. Citizens cannot submit or modify resolutions. Citizen verification is restricted to reporters and supporters, uses configured vote thresholds, and can close or reopen an issue.
+
+## Production deployment
+
+The repository includes [`render.yaml`](./render.yaml) as a deployment blueprint for a Render API service and static admin site. It does not contain credentials and cannot deploy by itself.
+
+1. Create a MongoDB Atlas project and a dedicated application database user with read/write access only to the CivicFix database. Allow the selected hosting provider's outbound access in Atlas network access. Prefer the provider's documented static egress IPs; do not use `0.0.0.0/0` unless it is a temporary, explicitly accepted development trade-off.
+2. Create an S3-compatible bucket (AWS S3 or Cloudflare R2) for media. Configure private credentials with access limited to that bucket and set its public media/CDN base URL in `MEDIA_PUBLIC_BASE_URL`. The backend stores object URLs in MongoDB; it does not depend on ephemeral server disk when `MEDIA_STORAGE=s3`.
+3. Create a Render Blueprint from `render.yaml`. Fill every `sync: false` value in Render's secret/environment interface:
+   `MONGODB_URI`, `JWT_SECRET`, `CORS_ORIGINS`, `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `MEDIA_PUBLIC_BASE_URL`, and the admin `VITE_API_URL`.
+4. Set `CORS_ORIGINS` to the exact HTTPS admin origin(s), comma-separated. Mobile requests do not send a browser Origin and do not require a mobile CORS entry.
+5. After deployment, verify `https://<api-host>/api/health` returns HTTP 200 with `"database":"connected"`. A 503 response means the service is running but MongoDB is not ready.
+
+### Mobile development and production builds
+
+Copy [`mobile/.env.development.example`](./mobile/.env.development.example) to `mobile/.env.local` for local development. Use a reachable LAN address for a physical phone; never use `localhost` or `127.0.0.1`.
+
+For a production build, copy [`mobile/.env.production.example`](./mobile/.env.production.example) to `mobile/.env.local`, replace the example host with the verified HTTPS API URL, and rebuild. Expo public variables are embedded at build time; restarting Metro does not update an installed app.
+
+From `mobile/`, `npx eas login` and `npx eas build:configure` are required once an Expo account/project is available. `npx eas build --platform android --profile preview` creates an installable internal APK. `npx eas build --platform android --profile production` creates an Android App Bundle for Google Play. EAS manages the release keystore when the project owner approves it; do not commit signing credentials or keystores. Increment `android.versionCode` for every Android release and update `version` for user-visible releases.
+
+No cloud deployment, public API URL, release APK, or second-device test has been claimed in this audit because provider accounts, Atlas credentials, Android SDK/ADB, and a physical test device were not available in this environment.

@@ -10,6 +10,7 @@ import { authRouter } from "./routes/authRoutes.js";
 import { adminRouter } from "./routes/adminRoutes.js";
 import { authorityRouter } from "./routes/authorityRoutes.js";
 import { issueRouter } from "./routes/issueRoutes.js";
+import { isDatabaseReady } from "./config/database.js";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,7 +18,7 @@ export const app = express();
 
 app.use(helmet());
 const configuredOrigin = new URL(env.CORS_ORIGIN);
-const allowedOrigins = new Set([env.CORS_ORIGIN]);
+const allowedOrigins = new Set((env.CORS_ORIGINS ?? env.CORS_ORIGIN).split(",").map((origin) => origin.trim()).filter(Boolean));
 if (configuredOrigin.hostname === "localhost") {
   configuredOrigin.hostname = "127.0.0.1";
   allowedOrigins.add(configuredOrigin.origin);
@@ -26,17 +27,26 @@ if (configuredOrigin.hostname === "localhost") {
   allowedOrigins.add(configuredOrigin.origin);
 }
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)) }));
+app.use((request, response, next) => {
+  const startedAt = Date.now();
+  response.on("finish", () => {
+    console.log(`${request.method} ${request.path} ${response.statusCode} ${Date.now() - startedAt}ms`);
+  });
+  next();
+});
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: "draft-8", legacyHeaders: false }));
 app.use(express.json({ limit: "1mb" }));
 app.use("/uploads", express.static(path.join(currentDirectory, "../uploads")));
 
 app.get("/api/health", (_request, response) => {
-  response.json({
+  const databaseReady = isDatabaseReady();
+  response.status(databaseReady ? 200 : 503).json({
     success: true,
     message: "CivicFix API is healthy",
     data: {
       service: "backend",
       environment: env.NODE_ENV,
+      database: databaseReady ? "connected" : "unavailable",
     },
   });
 });

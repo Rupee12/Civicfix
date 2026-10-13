@@ -1,7 +1,9 @@
 export type SessionUser = { id: string; name: string; email: string; role: 'CITIZEN' | 'AUTHORITY' | 'ADMIN' }
 export type Session = { token: string; user: SessionUser }
 
-const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api').replace(/\/+$/, '')
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
+if (!configuredApiUrl) throw new Error('VITE_API_URL is required to start the admin dashboard.')
+const apiBaseUrl = configuredApiUrl.replace(/\/+$/, '')
 const sessionKey = 'civicfix-admin-session'
 
 export class ApiClientError extends Error {

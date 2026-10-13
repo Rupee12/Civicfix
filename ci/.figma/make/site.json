@@ -1,0 +1,10 @@
+{
+  "description": "CivicFix is a responsive platform for administrators to manage civic issues reported by citizens, enabling efficient tracking, resolution, and community engagement.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

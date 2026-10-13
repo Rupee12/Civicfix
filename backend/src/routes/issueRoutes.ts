@@ -7,7 +7,8 @@ import { validateQuery } from "../middleware/validateQuery.js";
 import { createIssueSchema, listIssuesSchema, nearbyIssuesSchema } from "../validators/issueValidators.js";
 import { duplicateCheckSchema } from "../validators/duplicateValidators.js";
 import { supportIssueSchema } from "../validators/duplicateValidators.js";
-import { assignmentSchema, authorityQueueSchema, resolutionSchema, statusUpdateSchema } from "../validators/workflowValidators.js";
+import { assignmentSchema, authorityQueueSchema, resolutionSchema, statusUpdateSchema, verificationSchema } from "../validators/workflowValidators.js";
+import { verificationSummary, verifyResolution } from "../controllers/verificationController.js";
 
 export const issueRouter = Router();
 
@@ -25,5 +26,7 @@ issueRouter.patch("/:id/status", requireAuth, validateBody(statusUpdateSchema), 
 issueRouter.get("/:id/status-history", requireAuth, statusHistory);
 issueRouter.post("/:id/resolution", requireAuth, resolutionUpload, validateBody(resolutionSchema), createResolution);
 issueRouter.get("/:id/resolution", resolution);
+issueRouter.get("/:id/verification", requireAuth, verificationSummary);
+issueRouter.post("/:id/verification", requireAuth, validateBody(verificationSchema), verifyResolution);
 issueRouter.get("/:id/priority", priority);
 issueRouter.get("/:id", getIssue);

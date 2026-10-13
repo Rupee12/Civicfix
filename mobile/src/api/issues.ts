@@ -43,6 +43,21 @@ export async function getIssue(id: string) {
   return response.data.data.issue;
 }
 
+export async function getStatusHistory(id: string) {
+  const response = await apiClient.get<{ data: { history: { id: string; fromStatus: string; toStatus: string; changedBy?: { name: string; role: string }; changedAt: string; reason?: string }[] } }>(`/issues/${id}/status-history`);
+  return response.data.data.history;
+}
+
+export async function getVerificationSummary(id: string) {
+  const response = await apiClient.get<{ data: { resolved: number; notResolved: number; thresholds: { positiveVotesToClose: number; negativeVotesToReopen: number }; yourVerification: { vote: 'RESOLVED' | 'NOT_RESOLVED'; comment?: string } | null; status: string; eligible: boolean } }>(`/issues/${id}/verification`);
+  return response.data.data;
+}
+
+export async function submitVerification(id: string, vote: 'RESOLVED' | 'NOT_RESOLVED', comment?: string) {
+  const response = await apiClient.post<{ data: { resolved: number; notResolved: number; thresholds: { positiveVotesToClose: number; negativeVotesToReopen: number }; yourVerification: { vote: 'RESOLVED' | 'NOT_RESOLVED'; comment?: string } | null; status: string; eligible: boolean } }>(`/issues/${id}/verification`, { vote, comment });
+  return response.data.data;
+}
+
 export async function login(email: string, password: string) {
   const response = await apiClient.post<{ data: { token: string; user: { role: string } } }>('/auth/login', { email, password });
   return response.data.data;
