@@ -2,6 +2,7 @@ services:
   - type: web
     name: civicfix-api
     runtime: node
+    plan: free
     rootDir: backend
     buildCommand: npm ci && npm run build
     startCommand: npm start
