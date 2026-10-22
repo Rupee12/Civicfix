@@ -1,17 +1,29 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { ApiConfigurationError, resolveApiBaseUrl } from './apiConfig';
 
-const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-export const API_BASE_URL = configuredApiUrl ? normalizeApiUrl(configuredApiUrl) : '';
+let apiConfigurationError: ApiConfigurationError | undefined;
+export let API_BASE_URL: string;
+try {
+  API_BASE_URL = resolveApiBaseUrl(process.env.EXPO_PUBLIC_API_URL, process.env.NODE_ENV === 'production');
+} catch (error) {
+  if (!(error instanceof ApiConfigurationError)) throw error;
+  API_BASE_URL = '';
+  apiConfigurationError = error;
+}
 const TOKEN_KEY = 'civicfix.jwt';
 const ROLE_KEY = 'civicfix.role';
 
-export const apiClient = axios.create({ baseURL: API_BASE_URL || undefined, timeout: 15000 });
+export const apiClient = axios.create({ baseURL: API_BASE_URL || undefined, timeout: 60000 });
 
 apiClient.interceptors.request.use(async (config) => {
-  if (!API_BASE_URL) throw new Error('CivicFix API URL is missing from the app configuration.');
+  if (apiConfigurationError) throw apiConfigurationError;
+  if (!API_BASE_URL) throw new ApiConfigurationError('CivicFix API URL is missing from the app configuration.');
   const token = await SecureStore.getItemAsync(TOKEN_KEY);
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    config.headers.delete('Content-Type');
+  }
   return config;
 });
 
@@ -52,8 +64,11 @@ export function apiErrorMessage(error: unknown) {
     const status = axios.isAxiosError(error) ? error.response?.status ?? 'none' : 'none';
     console.warn(`[CivicFix API] ${category} path=${request} status=${status}`);
   }
-  if (category === 'configuration') return 'CivicFix is not configured correctly. Rebuild the app after setting its API URL.';
-  if (category === 'network') return 'CivicFix is unavailable. Check that the phone and computer are on the same Wi-Fi network.';
+  if (category === 'configuration') return 'CivicFix is not configured correctly. Please contact support or install a correctly configured build.';
+  if (category === 'network' && axios.isAxiosError(error) && ['ECONNABORTED', 'ETIMEDOUT'].includes(error.code ?? '')) {
+    return 'CivicFix is taking longer than expected to respond. It may be starting up; please try again shortly.';
+  }
+  if (category === 'network') return 'Unable to reach CivicFix. Check your internet connection and try again.';
   if (category === 'authentication') return 'Authentication failed. Check your sign-in details and try again.';
   if (category === 'permission') return 'You do not have permission to perform this action.';
   if (category === 'not-found') return 'The requested CivicFix resource was not found.';
@@ -65,22 +80,9 @@ export function apiErrorMessage(error: unknown) {
   return 'Something went wrong. Please try again.';
 }
 
-function normalizeApiUrl(value: string) {
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    return '';
-  }
-  if (!['http:', 'https:'].includes(url.protocol) || ['localhost', '127.0.0.1'].includes(url.hostname) || (process.env.NODE_ENV === 'production' && url.protocol !== 'https:')) return '';
-  const path = url.pathname.replace(/\/+$/, '');
-  if (!path.endsWith('/api')) return '';
-  return `${url.origin}${path}`;
-}
-
 function apiErrorCategory(error: unknown): 'configuration' | 'network' | 'authentication' | 'permission' | 'not-found' | 'server' | 'response' | 'unknown' {
+  if (error instanceof ApiConfigurationError) return 'configuration';
   if (error instanceof Error && error.name === 'ApiResponseError') return 'response';
-  if (error instanceof Error && error.message.includes('API URL')) return 'configuration';
   if (!axios.isAxiosError(error)) return 'unknown';
   if (!error.response) return 'network';
   if (error.response.status === 401) return 'authentication';

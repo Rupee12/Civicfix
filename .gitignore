@@ -4,6 +4,7 @@ dist/
 .env
 .env.*
 !.env.example
+!mobile/.env.production.example
 coverage/
 .vite/
 .DS_Store

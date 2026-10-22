@@ -32,6 +32,8 @@ The backend listens on `http://localhost:4000` and the admin app on `http://loca
 
 Copy `backend/.env.example` to `backend/.env` for local backend configuration. Set a unique `JWT_SECRET` with at least 32 characters. Secrets and database credentials must remain outside source control.
 
+For local mobile development, set `EXPO_PUBLIC_API_URL` in the ignored `mobile/.env.local` to the backend address reachable from your device, such as `http://<LAN_IP>:4000/api`; use the Render URL for devices that should use production. The production EAS profiles set `EXPO_PUBLIC_API_URL` to the deployed API in `mobile/eas.json`, and Expo compiles that public value into each app build. If Android maps are enabled, configure `GOOGLE_MAPS_API_KEY` in the EAS `production` environment as well as locally; do not commit the key.
+
 ## Phase 2 authentication API
 
 - `POST /api/auth/register` - creates a citizen account; public requests cannot choose a privileged role.
@@ -57,7 +59,7 @@ Backend endpoints now include:
 - `GET /api/issues/nearby` - MongoDB `$geoNear` lookup in meters, bounded to 5 km.
 - `GET /api/issues/my` - authenticated reports for the current JWT user.
 
-The mobile app uses `EXPO_PUBLIC_API_URL` for the API base URL. Android emulators default to `http://10.0.2.2:4000/api`; physical devices should use the development computer's LAN IP, for example `http://192.168.1.20:4000/api`.
+The mobile app uses `EXPO_PUBLIC_API_URL` for the API base URL and falls back to `https://civicfix-api-22p5.onrender.com/api`. For local development, set `EXPO_PUBLIC_API_URL` in `mobile/.env.local` to a backend address reachable from the phone/emulator (for example, a development computer's LAN IP); do not use that local override for a production build. EAS embeds this public URL in the app bundle at build time. The EAS `production` and `production-apk` profiles set the deployed URL explicitly; build an installable Android APK with `eas build --platform android --profile production-apk` from `mobile/`.
 
 Issue success paths require MongoDB. When MongoDB is unavailable locally, the backend remains available for health and validation/auth guards but database-backed issue operations cannot be verified.
 

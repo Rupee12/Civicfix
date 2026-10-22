@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+import { ApiConfigurationError, PRODUCTION_API_BASE_URL, resolveApiBaseUrl } from '../src/api/apiConfig.ts';
+
+const easConfig = JSON.parse(readFileSync(new URL('../eas.json', import.meta.url), 'utf8'));
+
+test('uses the production API URL when no environment value is provided', () => {
+  assert.equal(resolveApiBaseUrl(undefined, true), PRODUCTION_API_BASE_URL);
+  assert.equal(resolveApiBaseUrl('  ', true), PRODUCTION_API_BASE_URL);
+});
+
+test('normalizes the base path and removes duplicated API segments', () => {
+  assert.equal(resolveApiBaseUrl('https://api.example.com/', true), 'https://api.example.com/api');
+  assert.equal(resolveApiBaseUrl('https://api.example.com/api/api///', true), 'https://api.example.com/api');
+  assert.equal(resolveApiBaseUrl('https://api.example.com/v1/api/', true), 'https://api.example.com/v1/api');
+  assert.equal(resolveApiBaseUrl('https://api.example.com//api', true), 'https://api.example.com/api');
+});
+
+test('allows local HTTP endpoints during development', () => {
+  assert.equal(resolveApiBaseUrl('http://localhost:4000', false), 'http://localhost:4000/api');
+  assert.equal(resolveApiBaseUrl('http://192.168.1.20:4000/api/', false), 'http://192.168.1.20:4000/api');
+});
+
+test('rejects insecure or local production URLs', () => {
+  for (const url of [
+    'http://api.example.com/api',
+    'https://localhost:4000/api',
+    'https://127.0.0.1/api',
+    'https://10.0.2.2/api',
+    'https://172.16.0.1/api',
+    'https://192.168.1.20/api',
+    'https://100.64.0.1/api',
+  ]) {
+    assert.throws(() => resolveApiBaseUrl(url, true), ApiConfigurationError, url);
+  }
+});
+
+test('rejects malformed URLs and embedded credentials', () => {
+  assert.throws(() => resolveApiBaseUrl('not a URL', false), ApiConfigurationError);
+  assert.throws(() => resolveApiBaseUrl('https://user:password@api.example.com/api', true), ApiConfigurationError);
+});
+
+test('sets the deployed API URL for production APK and store builds', () => {
+  assert.equal(easConfig.build.production.env.EXPO_PUBLIC_API_URL, PRODUCTION_API_BASE_URL);
+  assert.equal(easConfig.build.production.environment, 'production');
+  assert.equal(easConfig.build['production-apk'].extends, 'production');
+  assert.equal(easConfig.build['production-apk'].environment, 'production');
+  assert.equal(easConfig.build['production-apk'].android.buildType, 'apk');
+});
