@@ -2,8 +2,20 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { ApiConfigurationError, PRODUCTION_API_BASE_URL, resolveApiBaseUrl } from '../src/api/apiConfig.ts';
+import appConfigFactory from '../app.config.ts';
 
 const easConfig = JSON.parse(readFileSync(new URL('../eas.json', import.meta.url), 'utf8'));
+const appConfig = appConfigFactory({});
+
+test('configures fingerprint-compatible EAS Update without blocking app launch', () => {
+  assert.equal(appConfig.updates?.url, 'https://u.expo.dev/69557ef5-6fdd-44fa-977f-df78b0b00509');
+  assert.equal(appConfig.updates?.checkAutomatically, 'ON_LOAD');
+  assert.equal(appConfig.updates?.fallbackToCacheTimeout, 0);
+  assert.deepEqual(appConfig.runtimeVersion, { policy: 'fingerprint' });
+  assert.ok(appConfig.plugins?.includes('expo-updates'));
+  assert.equal(appConfig.android?.package, 'com.civicfix.mobile');
+  assert.equal(appConfig.extra?.eas?.projectId, '69557ef5-6fdd-44fa-977f-df78b0b00509');
+});
 
 test('uses the production API URL when no environment value is provided', () => {
   assert.equal(resolveApiBaseUrl(undefined, true), PRODUCTION_API_BASE_URL);
@@ -44,7 +56,10 @@ test('rejects malformed URLs and embedded credentials', () => {
 test('sets the deployed API URL for production APK and store builds', () => {
   assert.equal(easConfig.build.production.env.EXPO_PUBLIC_API_URL, PRODUCTION_API_BASE_URL);
   assert.equal(easConfig.build.production.environment, 'production');
+  assert.equal(easConfig.build.production.channel, 'production');
   assert.equal(easConfig.build['production-apk'].extends, 'production');
   assert.equal(easConfig.build['production-apk'].environment, 'production');
+  assert.equal(easConfig.build['production-apk'].channel, 'production');
   assert.equal(easConfig.build['production-apk'].android.buildType, 'apk');
+  assert.equal(easConfig.build.preview.channel, 'preview');
 });

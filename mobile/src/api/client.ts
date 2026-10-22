@@ -80,6 +80,10 @@ export function apiErrorMessage(error: unknown) {
   return 'Something went wrong. Please try again.';
 }
 
+export function isAuthenticationError(error: unknown) {
+  return axios.isAxiosError(error) && error.response?.status === 401;
+}
+
 function apiErrorCategory(error: unknown): 'configuration' | 'network' | 'authentication' | 'permission' | 'not-found' | 'server' | 'response' | 'unknown' {
   if (error instanceof ApiConfigurationError) return 'configuration';
   if (error instanceof Error && error.name === 'ApiResponseError') return 'response';

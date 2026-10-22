@@ -1,13 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { DuplicateCandidate } from '../types/issue';
 
-export function PossibleDuplicatesScreen({ candidates, onSupport, onReportNew }: { candidates: DuplicateCandidate[]; onSupport: (candidate: DuplicateCandidate) => void; onReportNew: () => void }) {
+export function PossibleDuplicatesScreen({ candidates, disabled = false, onSupport, onReportNew }: { candidates: DuplicateCandidate[]; disabled?: boolean; onSupport: (candidate: DuplicateCandidate) => void; onReportNew: () => void }) {
   return <View style={styles.screen}>
     <Text style={styles.eyebrow}>A QUICK CHECK</Text>
     <Text style={styles.heading}>Is this the same problem?</Text>
     <Text style={styles.copy}>We found nearby reports that may describe the same civic issue.</Text>
-    {candidates.map((candidate) => <View key={candidate.issueId} style={styles.card}><Text style={styles.title}>{candidate.title}</Text><Text style={styles.category}>{candidate.category.replaceAll('_', ' ')}</Text><View style={styles.meta}><Text>{candidate.distanceMeters} m away</Text><Text>{candidate.confidence === 'HIGH' ? 'Strong match' : 'Possible match'}</Text></View><Text style={styles.counts}>{candidate.supportCount} supporters · {candidate.reportCount} reports</Text><Pressable onPress={() => onSupport(candidate)} style={styles.support}><Text style={styles.supportText}>Support existing issue</Text></Pressable></View>)}
-    <Pressable onPress={onReportNew} style={styles.newIssue}><Text style={styles.newIssueText}>Report a new issue</Text></Pressable>
+    {candidates.map((candidate) => <View key={candidate.issueId} style={styles.card}><Text style={styles.title}>{candidate.title}</Text><Text style={styles.category}>{candidate.category.replaceAll('_', ' ')}</Text><View style={styles.meta}><Text>{candidate.distanceMeters} m away</Text><Text>{candidate.confidence === 'HIGH' ? 'Strong match' : 'Possible match'}</Text></View><Text style={styles.counts}>{candidate.supportCount} supporters · {candidate.reportCount} reports</Text><Pressable onPress={() => onSupport(candidate)} disabled={disabled} style={styles.support}><Text style={styles.supportText}>{disabled ? 'Please wait...' : 'Support existing issue'}</Text></Pressable></View>)}
+    <Pressable onPress={onReportNew} disabled={disabled} style={styles.newIssue}><Text style={styles.newIssueText}>{disabled ? 'Please wait...' : 'Report a new issue'}</Text></Pressable>
   </View>;
 }
 

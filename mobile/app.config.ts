@@ -11,6 +11,14 @@ export default (_context: ConfigContext): ExpoConfig => {
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
+    updates: {
+      url: 'https://u.expo.dev/69557ef5-6fdd-44fa-977f-df78b0b00509',
+      checkAutomatically: 'ON_LOAD',
+      fallbackToCacheTimeout: 0,
+    },
+    runtimeVersion: {
+      policy: 'fingerprint',
+    },
 
     ios: {
       supportsTablet: true,
@@ -30,11 +38,27 @@ export default (_context: ConfigContext): ExpoConfig => {
         'ACCESS_COARSE_LOCATION',
         'ACCESS_FINE_LOCATION',
         'CAMERA',
-        'READ_MEDIA_IMAGES',
+      ],
+      blockedPermissions: [
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
       ],
     },
 
-    plugins: ['expo-location', 'expo-image-picker', 'expo-secure-store'],
+    plugins: [
+      'expo-location',
+      [
+        'expo-image-picker',
+        {
+          cameraPermission: 'Allow CivicFix to use your camera to photograph reported issues.',
+          microphonePermission: false,
+          photosPermission: false,
+        },
+      ],
+      'expo-secure-store',
+      'expo-updates',
+    ],
 
     web: {
       favicon: './assets/favicon.png',

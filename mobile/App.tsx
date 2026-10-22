@@ -24,7 +24,7 @@ function CitizenTabs({ onSignOut }: { onSignOut: () => void }) {
   return <Tabs.Navigator screenOptions={{ headerShown: false, tabBarActiveTintColor: '#28745A', tabBarInactiveTintColor: '#8A9890', tabBarLabelStyle: { fontWeight: '700' } }}>
     <Tabs.Screen name="Home">{({ navigation }) => <HomeScreen onReport={() => navigation.navigate('Report')} onExplore={() => navigation.navigate('Explore')} onReports={() => navigation.navigate('My Reports')} onProfile={() => navigation.navigate('Profile')} onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="Explore">{({ navigation }) => <NearbyIssuesScreen onReport={() => navigation.navigate('Report')} onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
-    <Tabs.Screen name="Report">{({ navigation }) => <ReportIssueScreen onCreated={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
+    <Tabs.Screen name="Report">{({ navigation }) => <ReportIssueScreen onSessionExpired={onSignOut} onCreated={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="My Reports">{({ navigation }) => <MyReportsScreen onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="Profile">{() => <ProfileScreen role="CITIZEN" onSignOut={onSignOut} />}</Tabs.Screen>
     <Tabs.Screen name="Notifications">{() => <NotificationsScreen />}</Tabs.Screen>
