@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { ApiConfigurationError, resolveApiBaseUrl } from './apiConfig';
+import { safeRequestUrl, sanitizeResponseBody } from './diagnostics';
 
 let apiConfigurationError: ApiConfigurationError | undefined;
 export let API_BASE_URL: string;
@@ -78,6 +79,18 @@ export function apiErrorMessage(error: unknown) {
     return 'CivicFix could not process that request. Check the details and try again.';
   }
   return 'Something went wrong. Please try again.';
+}
+
+export function logReportApiFailure(error: unknown) {
+  if (!__DEV__ || !axios.isAxiosError(error)) return;
+
+  const config = error.config;
+  const method = config?.method?.toUpperCase() ?? 'UNKNOWN';
+  const url = safeRequestUrl(config?.url, config?.baseURL ?? API_BASE_URL);
+  const status = error.response?.status ?? 'none';
+  const responseBody = sanitizeResponseBody(error.response?.data);
+
+  console.warn(`[CivicFix report] API request failed ${method} ${url} status=${status} responseBody=${JSON.stringify(responseBody)}`);
 }
 
 export function isAuthenticationError(error: unknown) {

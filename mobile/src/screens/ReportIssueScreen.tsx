@@ -6,7 +6,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { apiErrorMessage, isAuthenticationError } from '../api/client';
+import { apiErrorMessage, isAuthenticationError, logReportApiFailure } from '../api/client';
 import { checkDuplicates, createIssue, supportIssue } from '../api/issues';
 import { PossibleDuplicatesScreen } from './PossibleDuplicatesScreen';
 import type { DuplicateCandidate } from '../types/issue';
@@ -73,6 +73,7 @@ export function ReportIssueScreen({ onCreated, onSessionExpired }: { onCreated: 
   }
 
   function showApiFailure(title: string, error: unknown) {
+    logReportApiFailure(error);
     const message = apiErrorMessage(error);
     if (isAuthenticationError(error)) {
       showReportAlert('Session expired', 'Sign in again to continue reporting issues.', [

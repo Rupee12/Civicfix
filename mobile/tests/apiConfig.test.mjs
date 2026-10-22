@@ -17,6 +17,27 @@ test('configures fingerprint-compatible EAS Update without blocking app launch',
   assert.equal(appConfig.extra?.eas?.projectId, '69557ef5-6fdd-44fa-977f-df78b0b00509');
 });
 
+test('always includes the Maps plugin and conditionally configures its Android key', () => {
+  const mapsPlugin = (config) => config.plugins?.find(
+    (plugin) => Array.isArray(plugin) && plugin[0] === 'react-native-maps',
+  );
+
+  const previousKey = process.env.GOOGLE_MAPS_API_KEY;
+  try {
+    delete process.env.GOOGLE_MAPS_API_KEY;
+    assert.deepEqual(mapsPlugin(appConfigFactory({})), ['react-native-maps', {}]);
+
+    process.env.GOOGLE_MAPS_API_KEY = 'test-only-maps-key';
+    assert.deepEqual(mapsPlugin(appConfigFactory({})), [
+      'react-native-maps',
+      { androidGoogleMapsApiKey: 'test-only-maps-key' },
+    ]);
+  } finally {
+    if (previousKey === undefined) delete process.env.GOOGLE_MAPS_API_KEY;
+    else process.env.GOOGLE_MAPS_API_KEY = previousKey;
+  }
+});
+
 test('uses the production API URL when no environment value is provided', () => {
   assert.equal(resolveApiBaseUrl(undefined, true), PRODUCTION_API_BASE_URL);
   assert.equal(resolveApiBaseUrl('  ', true), PRODUCTION_API_BASE_URL);

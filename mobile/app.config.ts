@@ -75,12 +75,10 @@ export default (_context: ConfigContext): ExpoConfig => {
     ...(appConfig.plugins ?? []),
   ];
 
-  if (googleMapsApiKey) {
-    plugins.push([
-      'react-native-maps',
-      { androidGoogleMapsApiKey: googleMapsApiKey },
-    ]);
-  }
+  plugins.push([
+    'react-native-maps',
+    googleMapsApiKey ? { androidGoogleMapsApiKey: googleMapsApiKey } : {},
+  ]);
 
   plugins.push([
     'expo-splash-screen',
