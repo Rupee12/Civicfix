@@ -1,0 +1,10 @@
+{
+  "description": "A cinematic CivicFix splash experience introduces a civic technology app with an animated city, location signal, and brand reveal.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

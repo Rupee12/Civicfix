@@ -10,7 +10,8 @@ import type { MediaAsset } from "../types/issue.js";
 import { ApiError } from "../utils/apiError.js";
 import { calculatePriority, type PriorityResult } from "./priorityService.js";
 import { findSuggestedDepartmentId } from "./departmentService.js";
-import { ensureIssueSla } from "./slaService.js";
+import { getSlaConfiguration } from "./slaService.js";
+import { scheduleNewIssue } from "./issueScheduling.js";
 
 function ensureDatabaseReady() {
   if (!isDatabaseReady()) throw new ApiError(503, "Database is unavailable", "DATABASE_UNAVAILABLE");
@@ -54,11 +55,16 @@ export async function createIssue(input: CreateIssueInput, userId: string, photo
     for (const video of videos) videoAssets.push(await mediaStorageService.uploadVideo(video));
     const location = { type: "Point" as const, coordinates: [input.longitude, input.latitude] as [number, number] };
     const suggestedDepartmentId = await findSuggestedDepartmentId(input.category);
-    issueRecord = await IssueModel.create({ ...input, reportedBy: new Types.ObjectId(userId), location, canonicalLocation: location, suggestedDepartmentId, media: { photos: photoAssets, videos: videoAssets }, reports: [], reportCount: 1, supportCount: 0, assignmentHistory: [] });
+    const startedAt = new Date();
+    const scheduling = scheduleNewIssue(
+      { severity: input.severity, reportCount: 1, supportCount: 0, affectedPeopleEstimate: input.affectedPeopleEstimate, safetyImpact: input.safetyImpact },
+      startedAt,
+      await getSlaConfiguration(),
+    );
+    issueRecord = await IssueModel.create({ ...input, ...scheduling, createdAt: startedAt, reportedBy: new Types.ObjectId(userId), location, canonicalLocation: location, suggestedDepartmentId, media: { photos: photoAssets, videos: videoAssets }, reports: [], reportCount: 1, supportCount: 0, assignmentHistory: [] });
     reportRecord = await IssueReportModel.create({ issue: issueRecord._id, reportedBy: new Types.ObjectId(userId), title: input.title, description: input.description, category: input.category, location, media: { photos: photoAssets, videos: videoAssets }, severity: input.severity, reportStatus: "ACTIVE", isPrimary: true });
     await IssueModel.updateOne({ _id: issueRecord._id }, { $push: { reports: reportRecord._id } });
     const prioritizedIssue = await recalculateIssuePriority(issueRecord);
-    await ensureIssueSla(prioritizedIssue);
     return publicIssue(prioritizedIssue);
   } catch (error) {
     if (reportRecord) await IssueReportModel.deleteOne({ _id: reportRecord._id });

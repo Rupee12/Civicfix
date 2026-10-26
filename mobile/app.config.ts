@@ -83,10 +83,10 @@ export default (_context: ConfigContext): ExpoConfig => {
   plugins.push([
     'expo-splash-screen',
     {
-      image: './assets/splash-icon.png',
+      image: './assets/civicfix-splash-logo.png',
       imageWidth: 200,
       resizeMode: 'contain',
-      backgroundColor: '#F5F7F2',
+      backgroundColor: '#02090c',
     },
   ]);
 

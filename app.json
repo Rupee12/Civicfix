@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "69557ef5-6fdd-44fa-977f-df78b0b00509"
+      }
+    },
+    "android": {
+      "package": "com.rupesh1202.civicfix"
+    }
+  }
+}

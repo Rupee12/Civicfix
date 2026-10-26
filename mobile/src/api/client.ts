@@ -1,7 +1,13 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { ApiConfigurationError, resolveApiBaseUrl } from './apiConfig';
-import { safeRequestUrl, sanitizeResponseBody } from './diagnostics';
+import {
+  classifyApiFailure,
+  getReportApiStage,
+  safeRequestUrl,
+  sanitizeResponseBody,
+  tokenPresence,
+} from './diagnostics';
 
 let apiConfigurationError: ApiConfigurationError | undefined;
 export let API_BASE_URL: string;
@@ -22,6 +28,14 @@ apiClient.interceptors.request.use(async (config) => {
   if (!API_BASE_URL) throw new ApiConfigurationError('CivicFix API URL is missing from the app configuration.');
   const token = await SecureStore.getItemAsync(TOKEN_KEY);
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (__DEV__) {
+    const requestUrl = safeRequestUrl(config.url, config.baseURL ?? API_BASE_URL);
+    const stage = getReportApiStage(requestUrl);
+    if (stage) {
+      const payload = typeof FormData !== 'undefined' && config.data instanceof FormData ? 'multipart' : 'json';
+      console.info(`[CivicFix report] request stage=${stage} ${config.method?.toUpperCase() ?? 'UNKNOWN'} ${requestUrl} tokenPresent=${tokenPresence(token)} payload=${payload}`);
+    }
+  }
   if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
     config.headers.delete('Content-Type');
   }
@@ -61,9 +75,17 @@ export async function changePassword(currentPassword: string, newPassword: strin
 export function apiErrorMessage(error: unknown) {
   const category = apiErrorCategory(error);
   if (__DEV__) {
-    const request = axios.isAxiosError(error) ? error.config?.url ?? 'unknown request' : 'unknown request';
+    const config = axios.isAxiosError(error) ? error.config : undefined;
+    const request = safeRequestUrl(config?.url, config?.baseURL ?? API_BASE_URL);
     const status = axios.isAxiosError(error) ? error.response?.status ?? 'none' : 'none';
-    console.warn(`[CivicFix API] ${category} path=${request} status=${status}`);
+    const diagnosticCategory = axios.isAxiosError(error)
+      ? classifyApiFailure({
+        status: error.response?.status,
+        code: error.code,
+        isUpload: typeof FormData !== 'undefined' && error.config?.data instanceof FormData,
+      })
+      : category;
+    console.warn(`[CivicFix API] category=${diagnosticCategory} path=${request} status=${status}`);
   }
   if (category === 'configuration') return 'CivicFix is not configured correctly. Please contact support or install a correctly configured build.';
   if (category === 'network' && axios.isAxiosError(error) && ['ECONNABORTED', 'ETIMEDOUT'].includes(error.code ?? '')) {
@@ -88,9 +110,15 @@ export function logReportApiFailure(error: unknown) {
   const method = config?.method?.toUpperCase() ?? 'UNKNOWN';
   const url = safeRequestUrl(config?.url, config?.baseURL ?? API_BASE_URL);
   const status = error.response?.status ?? 'none';
+  const category = classifyApiFailure({
+    status: error.response?.status,
+    code: error.code,
+    isUpload: typeof FormData !== 'undefined' && config?.data instanceof FormData,
+  });
+  const stage = getReportApiStage(url) ?? 'unknown';
   const responseBody = sanitizeResponseBody(error.response?.data);
 
-  console.warn(`[CivicFix report] API request failed ${method} ${url} status=${status} responseBody=${JSON.stringify(responseBody)}`);
+  console.warn(`[CivicFix report] API request failed stage=${stage} category=${category} ${method} ${url} status=${status} responseBody=${JSON.stringify(responseBody)}`);
 }
 
 export function isAuthenticationError(error: unknown) {

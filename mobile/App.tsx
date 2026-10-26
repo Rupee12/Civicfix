@@ -1,8 +1,12 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { clearToken, getCurrentUser, getSession, saveSession } from './src/api/client';
+import { CinematicSplash } from './src/splash/CinematicSplash';
 import { AuthorityQueueScreen } from './src/screens/AuthorityQueueScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { IssueDetailsScreen } from './src/screens/IssueDetailsScreen';
@@ -20,6 +24,8 @@ import type { RootStackParamList } from './src/navigation/types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator();
 
+void SplashScreen.preventAutoHideAsync();
+
 function CitizenTabs({ onSignOut }: { onSignOut: () => void }) {
   return <Tabs.Navigator screenOptions={{ headerShown: false, tabBarActiveTintColor: '#28745A', tabBarInactiveTintColor: '#8A9890', tabBarLabelStyle: { fontWeight: '700' } }}>
     <Tabs.Screen name="Home">{({ navigation }) => <HomeScreen onReport={() => navigation.navigate('Report')} onExplore={() => navigation.navigate('Explore')} onReports={() => navigation.navigate('My Reports')} onProfile={() => navigation.navigate('Profile')} onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
@@ -33,6 +39,7 @@ function CitizenTabs({ onSignOut }: { onSignOut: () => void }) {
 
 export default function App() {
   const [session, setSession] = useState<{ token: string; role: string } | null>();
+  const [introVisible, setIntroVisible] = useState(true);
   useEffect(() => {
     void getSession().then(async (stored) => {
       if (!stored.token) { setSession(null); return; }
@@ -46,9 +53,13 @@ export default function App() {
       }
     });
   }, []);
+  useEffect(() => {
+    if (session !== undefined) void SplashScreen.hideAsync();
+  }, [session]);
+  const completeIntro = useCallback(() => setIntroVisible(false), []);
   if (session === undefined) return null;
   const signOut = () => { void clearToken().then(() => setSession(null)); };
-  return <NavigationContainer><Stack.Navigator screenOptions={{ headerTintColor: '#15352B', headerTitleStyle: { fontWeight: '700' } }}>
+  return <SafeAreaProvider><View style={{ flex: 1 }}><StatusBar hidden={introVisible} /><NavigationContainer><Stack.Navigator screenOptions={{ headerTintColor: '#15352B', headerTitleStyle: { fontWeight: '700' } }}>
     {!session ? <>
       <Stack.Screen name="Welcome" options={{ headerShown: false }}>{({ navigation }) => <WelcomeScreen onSignIn={() => navigation.navigate('Login')} onSignUp={() => navigation.navigate('SignUp')} />}</Stack.Screen>
       <Stack.Screen name="Login" options={{ headerShown: false }}>{() => <LoginScreen onLoggedIn={async (token, role) => { await saveSession(token, role); setSession({ token, role }); }} />}</Stack.Screen>
@@ -64,5 +75,5 @@ export default function App() {
       <Stack.Screen name="Details" options={{ title: 'Issue details' }}>{({ route }) => <IssueDetailsScreen issueId={route.params.issueId} />}</Stack.Screen>
       <Stack.Screen name="Resolution" options={{ title: 'Submit resolution' }}>{({ route }) => <ResolutionScreen issueId={route.params.issueId} onSubmitted={() => undefined} />}</Stack.Screen>
     </>}
-  </Stack.Navigator></NavigationContainer>;
+  </Stack.Navigator></NavigationContainer>{introVisible && <CinematicSplash onComplete={completeIntro} />}</View></SafeAreaProvider>;
 }

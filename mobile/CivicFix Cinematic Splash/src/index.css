@@ -1,0 +1,106 @@
+@import 'tailwindcss';
+
+@layer base {
+  html, body, #root { width: 100%; min-height: 100%; }
+  body { margin: 0; overflow: hidden; background: #02090c; color: white; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  button { font: inherit; }
+}
+
+:root { color-scheme: dark; }
+.splash-shell { position: relative; display: grid; min-height: 100svh; place-items: center; overflow: hidden; background: radial-gradient(circle at 50% 65%, #0a3a3a 0, #031418 42%, #010709 78%); }
+.splash-shell::before { content: ""; position: absolute; inset: 0; opacity: .11; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.36'/%3E%3C/svg%3E"); }
+.phone-stage { position: relative; width: min(100vw, calc(100svh * .4613)); height: min(100svh, calc(100vw * 2.168)); min-width: 320px; overflow: hidden; background: #02090c; box-shadow: 0 0 120px #0b806533; }
+.city { display: block; width: 100%; height: 100%; }
+.city-world { transform-origin: 196px 510px; animation: camera 4s cubic-bezier(.2,.7,.2,1) both; }
+.far-city { opacity: 0; transform-origin: center; animation: far-city 4s ease-out both; }
+.far-window { fill: none; stroke: #5debd5; stroke-width: 7; stroke-dasharray: 3 10; opacity: .3; }
+.antennas { fill: none; stroke: #60bcb5; stroke-width: 1; }
+.light-beams { fill: #4cffd3; opacity: 0; filter: url(#soft); animation: beams 4s ease-out forwards; }
+.fog { pointer-events: none; fill: #50d9cf; filter: url(#soft); opacity: 0; }
+.fog-back { animation: fog-back 4s ease-in-out forwards; }
+.fog-front { animation: fog-front 4s ease-in-out forwards; }
+.stars { fill: #a2fff0; opacity: 0; animation: stars 2s .2s ease-out forwards; }
+.ambient-glow { fill: #12dca2; opacity: 0; filter: url(#soft); animation: ambient 4s ease-in-out forwards; }
+.building { opacity: 0; animation: rise .8s calc(.12s + var(--i) * .06s) cubic-bezier(.16,.8,.3,1) forwards; }
+.building > path:first-child { filter: drop-shadow(0 -2px 4px #59e6d544); }
+.building > path:nth-child(3) { stroke: #49cfc244; stroke-width: .8; }
+.window, .civic-light { fill: #9ffff0; opacity: .06; filter: url(#glow); animation: light-on .3s calc(.25s + var(--i, 1) * .08s + var(--w, 1) * .025s) ease-out forwards; }
+.civic-building { opacity: 0; animation: rise .65s .18s cubic-bezier(.16,.8,.3,1) forwards; }
+.trees { opacity: 0; animation: fade .8s .35s forwards; }
+.streetlights { opacity: 0; animation: fade .5s .32s forwards; }
+.lamp { fill: #fff4c2; filter: url(#glow); animation: lamp-on .25s .48s both; }
+.lane-marks { opacity: 0; animation: fade .6s .35s forwards; }
+.road-reflections { fill: none; stroke: #6effe8; stroke-width: 10; opacity: .08; filter: url(#soft); }
+.signal { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 18 82; stroke-dashoffset: 102; filter: url(#glow); opacity: 0; animation: signal-run 1s .62s cubic-bezier(.3,.1,.5,1) forwards; }
+.signal-a { stroke: #24ffc2; }
+.signal-b { stroke: #26aaff; animation-delay: .82s; }
+.signal-c { stroke: #2dffc2; animation-delay: .92s; }.signal-d { stroke: #3ab5ff; animation-delay: 1s; }.signal-e { stroke: #9effe7; animation-delay: 1.08s; }
+.route-marker { opacity: 0; animation: marker 1s 1s ease-out forwards; }
+.route-marker circle:first-child { fill: #072f34; stroke: #3effc8; stroke-width: 1.5; filter: url(#glow); }
+.route-marker circle:last-child { fill: #f9fffe; }
+.marker-1 { animation-delay: 1.12s }.marker-2 { animation-delay: 1.22s }
+.intersection { fill: none; stroke: #aaffed; stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; animation: intersection 500ms 1.08s ease-out forwards; }
+.i-two { stroke: #72c9ff; animation-delay: 1.25s; }
+.pin { opacity: 0; transform-origin: 196px 474px; animation: pin-rise .78s 1.4s cubic-bezier(.17,.9,.25,1.25) forwards; filter: drop-shadow(0 8px 15px #ff6d2844); }
+.pin-shadow { fill: #000; opacity: .4; filter: url(#soft); }
+.pin path { stroke: #ffc274; stroke-width: 1.5; }
+.ring { fill: none; stroke: #2dffd0; stroke-width: 2; opacity: 0; transform-origin: 196px 471px; animation: ring-out .8s 1.75s ease-out forwards; filter: url(#glow); }
+.ring-1 { animation-delay: 1.9s; }.ring-2 { animation-delay: 2.05s; }
+.particles { fill: #b7fff1; filter: url(#glow); }
+.particles circle { opacity: 0; transform-box: fill-box; transform-origin: center; animation: particle 1s calc(1.72s + var(--p) * .018s) ease-out forwards; }
+.ribbon { fill: none; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; opacity: 0; filter: url(#glow); animation: ribbon 1.05s 2.15s cubic-bezier(.4,0,.2,1) forwards; }
+.ribbon-a { stroke: url(#brandGradient); }.ribbon-b { stroke: #2aaaff; animation-delay: 2.28s; }
+.brand { pointer-events: none; }
+.brand-halo { fill: #19e7b3; opacity: 0; filter: url(#soft); animation: halo 1.1s 2.68s ease-out forwards; }
+.icon-frame { opacity: 0; transform-origin: 196px 350px; animation: icon-reveal 1s 2.68s cubic-bezier(.18,.9,.25,1.15) forwards; filter: drop-shadow(0 14px 28px #001014aa) drop-shadow(0 0 20px #1dffc64d); }
+.official-icon { clip-path: inset(0 round 36px); }
+.icon-sweep { opacity: 0; filter: url(#glow); animation: icon-sweep .8s 2.9s ease-out forwards; }
+.civic-edge { fill: none; stroke: #82fff0; stroke-width: 1; opacity: .7; filter: url(#glow); }
+.civic-core { fill: #7bfff0; filter: url(#glow); animation: core-pulse .65s 1.45s ease-out both; }
+.foreground { opacity: 0; animation: foreground-in 4s cubic-bezier(.2,.7,.2,1) both; filter: drop-shadow(0 -8px 20px #0008); }
+.foreground rect { fill: #50ffce; opacity: .34; filter: url(#glow); }
+.wordmark { fill: #f5fffd; font-size: 42px; font-weight: 650; letter-spacing: -2.2px; opacity: 0; animation: brand-text .6s 3.18s ease-out forwards; }
+.wordmark tspan { fill: #3df0bd; }
+.tagline { fill: #a4c9c5; font-size: 10px; font-weight: 600; letter-spacing: 3.2px; opacity: 0; animation: brand-text .6s 3.38s ease-out forwards; }
+.eyebrow { fill: #68a9a3; font-size: 8px; font-weight: 600; letter-spacing: 3px; opacity: 0; animation: fade 1s 3.45s forwards; }
+.bottom-sheen { animation: fade 1s 3s both; }
+.replay { position: fixed; z-index: 5; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 7px; padding: 9px 14px; border: 1px solid #6ce1c344; border-radius: 999px; color: #bfe9e2; background: #061a1dcc; backdrop-filter: blur(10px); font-size: 12px; letter-spacing: .06em; opacity: 0; transform: translate(-50%, 12px); transition: opacity .4s, transform .4s, border-color .2s; cursor: pointer; }
+.replay svg { width: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.replay.is-visible { opacity: 1; transform: translate(-50%, 0); }.replay:disabled { pointer-events: none; }.replay:hover { border-color: #65f4cd99; color: white; }
+
+@keyframes camera { 0% { transform: scale(.92) translateY(20px); opacity: .1 } 18%, 55% { opacity: 1 } 60% { transform: scale(1.03) translateY(-7px) } 78%, 100% { transform: scale(1.11) translateY(95px); opacity: 0 } }
+@keyframes far-city { 0% { opacity: 0; transform: translateY(18px) scale(.96) } 18%, 70% { opacity: .52; transform: translateY(0) scale(1.01) } 100% { opacity: .12; transform: translateY(6px) scale(1.03) } }
+@keyframes beams { 0%, 12% { opacity: 0 } 35%, 68% { opacity: .07 } 100% { opacity: .025 } }
+@keyframes fog-back { 0% { opacity: .35; transform: translateX(-40px) } 28% { opacity: .12 } 75%, 100% { opacity: .04; transform: translateX(28px) } }
+@keyframes fog-front { 0% { opacity: .22; transform: translateX(35px) } 35% { opacity: .06 } 72%, 100% { opacity: .02; transform: translateX(-30px) } }
+@keyframes foreground-in { 0% { opacity: 0; transform: translateY(45px) scale(1.04) } 20%, 65% { opacity: 1; transform: translateY(0) scale(1.01) } 100% { opacity: .12; transform: translateY(30px) scale(1.08) } }
+@keyframes stars { to { opacity: .55 } }
+@keyframes ambient { 0% { opacity: 0 } 42% { opacity: .12 } 68% { opacity: .28 } 100% { opacity: .14 } }
+@keyframes rise { from { opacity: 0; transform: translateY(22px) } to { opacity: 1; transform: none } }
+@keyframes fade { to { opacity: 1 } }
+@keyframes light-on { 0% { opacity: .05 } 70% { opacity: 1 } 100% { opacity: .75 } }
+@keyframes lamp-on { from { opacity: .1 } to { opacity: 1 } }
+@keyframes signal-run { 0% { opacity: 0; stroke-dashoffset: 102 } 15%, 80% { opacity: 1 } 100% { opacity: 0; stroke-dashoffset: 0 } }
+@keyframes intersection { 0% { opacity: 0; transform: scale(.3) } 40% { opacity: 1 } 100% { opacity: 0; transform: scale(3.8) } }
+@keyframes marker { 0% { opacity: 0; transform: scale(.3) } 45% { opacity: 1; transform: scale(1.18) } 100% { opacity: .65; transform: scale(1) } }
+@keyframes pin-rise { 0% { opacity: 0; transform: translate(196px, 470px) scale(.4) } 65% { opacity: 1; transform: translate(196px, 422px) scale(1.08) } 100% { opacity: 1; transform: translate(196px, 430px) scale(1) } }
+@keyframes ring-out { from { opacity: .8; transform: scale(.35) } to { opacity: 0; transform: scale(3.2) } }
+@keyframes particle { 0% { opacity: 0; transform: scale(.2) } 22% { opacity: 1; transform: translateY(-12px) scale(1) } 100% { opacity: 0; transform: translate(0, -58px) scale(.2) } }
+@keyframes ribbon { 0% { opacity: 0; stroke-dashoffset: 100 } 30%, 80% { opacity: 1 } 100% { opacity: 0; stroke-dashoffset: 0 } }
+@keyframes halo { 0% { opacity: 0; transform: scale(.2) } 35% { opacity: .38 } 100% { opacity: .13; transform: scale(1.7) } }
+@keyframes icon-reveal { 0% { opacity: 0; transform: scale(.28) rotate(-8deg) } 65% { opacity: 1; transform: scale(1.05) } 100% { opacity: 1; transform: scale(1) } }
+@keyframes icon-sweep { 0% { opacity: 0; stroke-dasharray: 0 160 } 45% { opacity: .9 } 100% { opacity: 0; stroke-dasharray: 160 0 } }
+@keyframes core-pulse { 0% { opacity: 0; transform: scale(.1) } 60% { opacity: 1; transform: scale(1.5) } 100% { opacity: .8; transform: scale(1) } }
+@keyframes draw { to { stroke-dashoffset: 0 } }
+@keyframes brand-text { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+
+@media (max-aspect-ratio: 393 / 852) {
+  .phone-stage { width: 100vw; height: 100svh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .city-world, .far-city, .light-beams, .fog, .foreground, .stars, .ambient-glow, .building, .window, .civic-building, .trees, .streetlights, .lamp, .lane-marks, .brand-halo, .icon-frame, .wordmark, .tagline, .eyebrow, .bottom-sheen { animation: none !important; }
+  .city-world { opacity: 0; }
+  .far-city { opacity: .25; }.stars { opacity: .45; }.ambient-glow { opacity: .12; }
+  .brand-halo { opacity: .12; }.icon-frame, .wordmark, .tagline, .eyebrow { opacity: 1; }
+  .signal, .pin, .ring, .particles, .ribbon { display: none; }
+}
