@@ -10,6 +10,7 @@ import { apiErrorMessage, isAuthenticationError, logReportApiFailure } from '../
 import { checkDuplicates, createIssue, supportIssue } from '../api/issues';
 import { PossibleDuplicatesScreen } from './PossibleDuplicatesScreen';
 import type { DuplicateCandidate } from '../types/issue';
+import { colors } from '../theme';
 import { ISSUE_CATEGORIES, type IssueCategory, type IssueSeverity, type SafetyImpact } from '../types/issue';
 import {
   getReportImageResizeAction,
@@ -315,4 +316,27 @@ export function ReportIssueScreen({ onCreated, onSessionExpired }: { onCreated: 
   </ScrollView>;
 }
 
-const styles = StyleSheet.create({ container: { padding: 22, paddingBottom: 40, backgroundColor: '#F5F7F2' }, heading: { color: '#15352B', fontSize: 30, fontWeight: '800' }, intro: { color: '#64736B', fontSize: 15, marginBottom: 18, marginTop: 8 }, label: { color: '#2D4A3E', fontSize: 13, fontWeight: '800', marginBottom: 8, marginTop: 16, textTransform: 'uppercase' }, grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, chip: { backgroundColor: '#FFF', borderColor: '#DCE5DF', borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10 }, chipActive: { backgroundColor: '#28745A', borderColor: '#28745A' }, chipText: { color: '#426057', fontSize: 13 }, chipTextActive: { color: '#FFF', fontWeight: '700' }, input: { backgroundColor: '#FFF', borderColor: '#DCE5DF', borderRadius: 10, borderWidth: 1, padding: 13, fontSize: 16 }, textArea: { minHeight: 100, textAlignVertical: 'top' }, photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, photoActions: { flexDirection: 'row', gap: 10, marginTop: 10 }, photo: { borderRadius: 10, height: 74, width: 74 }, addPhoto: { alignItems: 'center', borderColor: '#B7C8BE', borderRadius: 10, borderStyle: 'dashed', borderWidth: 1, height: 54, justifyContent: 'center', width: 100 }, addPhotoText: { color: '#28745A', fontWeight: '700' }, photoHint: { color: '#64736B', fontSize: 12, marginTop: 8 }, locationMessage: { color: '#64736B', marginBottom: 8 }, map: { height: 220, borderRadius: 14, overflow: 'hidden' }, retry: { color: '#28745A', fontWeight: '700', paddingVertical: 12 }, submit: { alignItems: 'center', backgroundColor: '#E9774C', borderRadius: 12, marginTop: 22, padding: 16 }, submitText: { color: '#FFF', fontSize: 16, fontWeight: '800' } });
+const styles = StyleSheet.create({
+  container: { padding: 22, paddingBottom: 40, backgroundColor: colors.background },
+  heading: { color: colors.navy, fontSize: 29, fontWeight: '800' },
+  intro: { color: colors.muted, fontSize: 14, marginBottom: 18, marginTop: 8 },
+  label: { color: colors.navy, fontSize: 12, fontWeight: '800', marginBottom: 8, marginTop: 16, textTransform: 'uppercase' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10 },
+  chipActive: { backgroundColor: colors.blue, borderColor: colors.blue },
+  chipText: { color: colors.muted, fontSize: 13 },
+  chipTextActive: { color: colors.surface, fontWeight: '700' },
+  input: { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 13, borderWidth: 1, padding: 13, fontSize: 16 },
+  textArea: { minHeight: 100, textAlignVertical: 'top' },
+  photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  photoActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  photo: { borderRadius: 12, height: 74, width: 74 },
+  addPhoto: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.blue, borderRadius: 13, borderStyle: 'dashed', borderWidth: 1, height: 54, justifyContent: 'center', width: 112 },
+  addPhotoText: { color: colors.blue, fontWeight: '700' },
+  photoHint: { color: colors.muted, fontSize: 12, marginTop: 8 },
+  locationMessage: { color: colors.muted, marginBottom: 8 },
+  map: { height: 220, borderRadius: 16, overflow: 'hidden' },
+  retry: { color: colors.blue, fontWeight: '700', paddingVertical: 12 },
+  submit: { alignItems: 'center', backgroundColor: colors.blue, borderRadius: 15, marginTop: 22, padding: 16 },
+  submitText: { color: colors.surface, fontSize: 16, fontWeight: '800' },
+});

@@ -3,5 +3,5 @@
   "compilerOptions": {
     "strict": true
   },
-  "exclude": ["CivicFix Cinematic Splash"]
+  "exclude": ["CivicFix Cinematic Splash", "Redesign CivicFix Mobile App"]
 }

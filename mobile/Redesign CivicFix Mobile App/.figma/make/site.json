@@ -1,0 +1,10 @@
+{
+  "description": "A civic service app that helps residents report local issues, track complaints, explore nearby concerns, and receive updates from authorities.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

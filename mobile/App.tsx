@@ -2,7 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar, View } from 'react-native';
+import { StatusBar, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { clearToken, getCurrentUser, getSession, saveSession } from './src/api/client';
@@ -20,20 +20,46 @@ import { ResolutionScreen } from './src/screens/ResolutionScreen';
 import { SignUpScreen } from './src/screens/SignUpScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import type { RootStackParamList } from './src/navigation/types';
+import { TabIcon, type TabIconName } from './src/navigation/TabIcon';
+import { colors } from './src/theme';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator();
+const tabIcons: Record<string, TabIconName> = {
+  Home: 'home',
+  Explore: 'map',
+  Report: 'report',
+  'My Reports': 'reports',
+  Profile: 'profile',
+};
 
 void SplashScreen.preventAutoHideAsync();
 
 function CitizenTabs({ onSignOut }: { onSignOut: () => void }) {
-  return <Tabs.Navigator screenOptions={{ headerShown: false, tabBarActiveTintColor: '#28745A', tabBarInactiveTintColor: '#8A9890', tabBarLabelStyle: { fontWeight: '700' } }}>
-    <Tabs.Screen name="Home">{({ navigation }) => <HomeScreen onReport={() => navigation.navigate('Report')} onExplore={() => navigation.navigate('Explore')} onReports={() => navigation.navigate('My Reports')} onProfile={() => navigation.navigate('Profile')} onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
+  const { width } = useWindowDimensions();
+  return <Tabs.Navigator screenOptions={({ route }) => ({
+    headerShown: false,
+    tabBarActiveTintColor: colors.blue,
+    tabBarInactiveTintColor: colors.muted,
+    tabBarLabelStyle: { fontSize: width < 360 ? 9 : 10, fontWeight: '700', includeFontPadding: false },
+    tabBarStyle: {
+      backgroundColor: colors.surface,
+      borderTopColor: colors.line,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      elevation: 8,
+      paddingTop: 5,
+    },
+    tabBarIcon: ({ color, size }) => {
+      const name = tabIcons[route.name];
+      return name ? <TabIcon color={color} name={name} size={size} /> : null;
+    },
+  })}>
+    <Tabs.Screen name="Home">{({ navigation }) => <HomeScreen onReport={() => navigation.navigate('Report')} onExplore={() => navigation.navigate('Explore')} onReports={() => navigation.navigate('My Reports')} onProfile={() => navigation.navigate('Profile')} onNotifications={() => navigation.navigate('Notifications')} onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="Explore">{({ navigation }) => <NearbyIssuesScreen onReport={() => navigation.navigate('Report')} onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="Report">{({ navigation }) => <ReportIssueScreen onSessionExpired={onSignOut} onCreated={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="My Reports">{({ navigation }) => <MyReportsScreen onSelect={(issueId) => navigation.getParent()?.navigate('Details' as never, { issueId } as never)} />}</Tabs.Screen>
     <Tabs.Screen name="Profile">{() => <ProfileScreen role="CITIZEN" onSignOut={onSignOut} />}</Tabs.Screen>
-    <Tabs.Screen name="Notifications">{() => <NotificationsScreen />}</Tabs.Screen>
+    <Tabs.Screen name="Notifications" options={{ tabBarButton: () => null }}>{() => <NotificationsScreen />}</Tabs.Screen>
   </Tabs.Navigator>;
 }
 
@@ -59,7 +85,7 @@ export default function App() {
   const completeIntro = useCallback(() => setIntroVisible(false), []);
   if (session === undefined) return null;
   const signOut = () => { void clearToken().then(() => setSession(null)); };
-  return <SafeAreaProvider><View style={{ flex: 1 }}><StatusBar hidden={introVisible} /><NavigationContainer><Stack.Navigator screenOptions={{ headerTintColor: '#15352B', headerTitleStyle: { fontWeight: '700' } }}>
+  return <SafeAreaProvider><View style={{ flex: 1 }}><StatusBar hidden={introVisible} /><NavigationContainer><Stack.Navigator screenOptions={{ headerTintColor: colors.navy, headerTitleStyle: { fontWeight: '700' }, headerStyle: { backgroundColor: colors.surface }, contentStyle: { backgroundColor: colors.background } }}>
     {!session ? <>
       <Stack.Screen name="Welcome" options={{ headerShown: false }}>{({ navigation }) => <WelcomeScreen onSignIn={() => navigation.navigate('Login')} onSignUp={() => navigation.navigate('SignUp')} />}</Stack.Screen>
       <Stack.Screen name="Login" options={{ headerShown: false }}>{() => <LoginScreen onLoggedIn={async (token, role) => { await saveSession(token, role); setSession({ token, role }); }} />}</Stack.Screen>

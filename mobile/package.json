@@ -34,7 +34,9 @@
     "web": "expo start --web",
     "test:api-diagnostics": "node --experimental-strip-types --test tests/apiDiagnostics.test.mjs",
     "test:api-config": "node --experimental-strip-types --test tests/apiConfig.test.mjs",
-    "test:report-media": "node --experimental-strip-types --test tests/reportMedia.test.mjs"
+    "test:report-media": "node --experimental-strip-types --test tests/reportMedia.test.mjs",
+    "test:map-coordinates": "node --experimental-strip-types --test tests/mapCoordinates.test.mjs",
+    "test:splash-animation": "node --experimental-strip-types --test tests/splashAnimation.test.mjs"
   },
   "private": true
 }

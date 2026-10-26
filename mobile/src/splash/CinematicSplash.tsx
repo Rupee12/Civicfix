@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
   type ImageSourcePropType,
 } from 'react-native';
 import {
@@ -23,6 +24,7 @@ import {
   TSpan,
 } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CIVIC_PIN_MOTION } from './pinMotion';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -40,6 +42,9 @@ const buildings = [
 ];
 
 function CinematicArtwork({ progress }: { progress: Animated.Value }) {
+  const { width, height } = useWindowDimensions();
+  const svgScale = Math.max(width / 393, height / 852);
+  const svgOffsetY = (height - 852 * svgScale) / 2;
   const reveal = (start: number, end: number) => progress.interpolate({
     inputRange: [0, start, end, 1],
     outputRange: [0, 0, 1, 1],
@@ -52,22 +57,18 @@ function CinematicArtwork({ progress }: { progress: Animated.Value }) {
   });
 
   return (
-    <Svg
-      accessibilityLabel="CivicFix city animation"
-      accessible
-      preserveAspectRatio="xMidYMid slice"
-      style={StyleSheet.absoluteFill}
-      viewBox="0 0 393 852"
-    >
+    <>
+      <Svg
+        accessibilityLabel="CivicFix city animation"
+        accessible
+        preserveAspectRatio="xMidYMid slice"
+        style={StyleSheet.absoluteFill}
+        viewBox="0 0 393 852"
+      >
       <Defs>
         <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor="#02090c" />
           <Stop offset="1" stopColor="#063238" />
-        </LinearGradient>
-        <LinearGradient id="pinGradient" x1="0" y1="0" x2="0.7" y2="1">
-          <Stop offset="0" stopColor="#ffbc62" />
-          <Stop offset="0.5" stopColor="#ff7b2d" />
-          <Stop offset="1" stopColor="#ca461a" />
         </LinearGradient>
         <LinearGradient id="brandGradient" x1="0" y1="0" x2="1" y2="0">
           <Stop offset="0" stopColor="#2dffd0" />
@@ -231,17 +232,6 @@ function CinematicArtwork({ progress }: { progress: Animated.Value }) {
           />
         ))}
         <Ellipse cx="196" cy="460" rx="28" ry="9" fill="#000000" opacity="0.4" />
-        <AnimatedG
-          transform={progress.interpolate({
-            inputRange: [0.34, 0.42, 0.5],
-            outputRange: ['translate(196 470) scale(0.7)', 'translate(196 422) scale(1.08)', 'translate(196 430) scale(1)'],
-            extrapolate: 'clamp',
-          })}
-        >
-          <Path d="M0-47c-20 0-35 15-35 34 0 26 35 57 35 57s35-31 35-57C35-32 20-47 0-47Z" fill="url(#pinGradient)" stroke="#ffc274" strokeWidth="1.5" />
-          <Circle cy="-14" r="12" fill="#fff9ec" />
-          <Circle cy="-14" r="5" fill="#ff8b35" />
-        </AnimatedG>
       </AnimatedG>
 
       <AnimatedG opacity={reveal(0.53, 0.68)}>
@@ -290,7 +280,55 @@ function CinematicArtwork({ progress }: { progress: Animated.Value }) {
           A BETTER CITY STARTS HERE
         </SvgText>
       </AnimatedG>
-    </Svg>
+      </Svg>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.pinMotion,
+          {
+            left: width / 2 - 35 * svgScale,
+            top: svgOffsetY + 422 * svgScale - 50 * svgScale,
+            width: 70 * svgScale,
+            height: 100 * svgScale,
+            opacity: reveal(0.34, 0.4),
+            transform: [
+              {
+                translateY: progress.interpolate({
+                  inputRange: [...CIVIC_PIN_MOTION.inputRange],
+                  outputRange: CIVIC_PIN_MOTION.translateY.map((value) => value * svgScale),
+                  extrapolate: 'clamp',
+                }),
+              },
+              {
+                scale: progress.interpolate({
+                  inputRange: [...CIVIC_PIN_MOTION.inputRange],
+                  outputRange: [...CIVIC_PIN_MOTION.scale],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Svg
+          width="100%"
+          height="100%"
+          viewBox="-35 -50 70 100"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <Defs>
+            <LinearGradient id="pinGradient" x1="0" y1="0" x2="0.7" y2="1">
+              <Stop offset="0" stopColor="#ffbc62" />
+              <Stop offset="0.5" stopColor="#ff7b2d" />
+              <Stop offset="1" stopColor="#ca461a" />
+            </LinearGradient>
+          </Defs>
+          <Path d="M0-47c-20 0-35 15-35 34 0 26 35 57 35 57s35-31 35-57C35-32 20-47 0-47Z" fill="url(#pinGradient)" stroke="#ffc274" strokeWidth="1.5" />
+          <Circle cy="-14" r="12" fill="#fff9ec" />
+          <Circle cy="-14" r="5" fill="#ff8b35" />
+        </Svg>
+      </Animated.View>
+    </>
   );
 }
 
@@ -363,6 +401,9 @@ export function CinematicSplash({ onComplete }: { onComplete: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  pinMotion: {
+    position: 'absolute',
+  },
   overlay: {
     position: 'absolute',
     top: 0,
