@@ -1,12 +1,15 @@
 import { Router } from "express";
 import { analytics, authorities, createAuthorityController, createDepartmentController, departments, prioritySummary, reportExport, updateAuthorityController, updateDepartmentController, workload } from "../controllers/adminController.js";
+import { updateMyPassword } from "../controllers/authController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { validateBody } from "../middleware/validate.js";
 import { validateQuery } from "../middleware/validateQuery.js";
 import { authorityCreateSchema, authorityUpdateSchema, departmentCreateSchema, departmentUpdateSchema } from "../validators/workflowValidators.js";
 import { analyticsQuerySchema, reportQuerySchema } from "../validators/analyticsValidators.js";
+import { passwordChangeSchema } from "../validators/authValidators.js";
 
 export const adminRouter = Router();
+adminRouter.patch("/me/password", requireAuth, requireRole("ADMIN"), validateBody(passwordChangeSchema), updateMyPassword);
 adminRouter.get("/priority", requireAuth, requireRole("ADMIN", "AUTHORITY"), prioritySummary);
 adminRouter.get("/workload", requireAuth, requireRole("ADMIN"), workload);
 adminRouter.get("/analytics", requireAuth, requireRole("ADMIN"), validateQuery(analyticsQuerySchema), analytics);

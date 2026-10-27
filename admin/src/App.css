@@ -35,6 +35,18 @@
 .admin-live-badge.connection-auth-error, .admin-live-badge.connection-server-error, .admin-live-badge.connection-network-error, .admin-live-badge.connection-configuration-error { color: #a74646; }.admin-live-badge.connection-auth-error i, .admin-live-badge.connection-server-error i, .admin-live-badge.connection-network-error i, .admin-live-badge.connection-configuration-error i { background: #cf6666; }
 .admin-avatar { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 50%; background: #dff5f1; color: #247a58; font-size: .66rem; font-weight: 700; }
 .admin-content { min-width: 0; }
+.settings-panel { max-width: 620px; }
+.settings-form { display: grid; gap: 14px; }
+.settings-form h2 { color: #172b2a; font-size: 22px; }
+.settings-form > label { display: grid; gap: 7px; color: #53676a; font-size: 12px; font-weight: 700; }
+.settings-form input { width: 100%; min-height: 42px; border: 1px solid #dfeae3; border-radius: 9px; padding: 9px 11px; color: #304547; background: #fff; font: inherit; font-size: 13px; }
+.settings-form > button { justify-self: start; min-height: 38px; border: 0; border-radius: 9px; padding: 0 15px; color: #fff; background: #247a58; font-size: 12px; font-weight: 700; }
+.settings-form > button:disabled { cursor: wait; opacity: .65; }
+.password-input-wrap { display: flex; align-items: center; gap: 8px; }
+.password-visibility { min-height: 36px; border: 1px solid #dfeae3; border-radius: 8px; padding: 0 10px; color: #247a58; background: #fff; font-size: 11px; font-weight: 700; }
+.password-feedback { margin: 0; font-size: 12px; }
+.password-feedback.error { color: #a74646; }
+.password-feedback.success { color: #247a58; }
 .admin-menu-button, .admin-mobile-close, .admin-mobile-scrim { display: none; }
 .integration-pending { max-width: 620px; margin: 60px auto; padding: 40px; border: 1px solid #e2ebe6; border-radius: 16px; background: #fff; box-shadow: 0 12px 35px rgba(30,73,57,.07); }
 .integration-pending h2 { color: #172b2a; font-family: "Space Grotesk", sans-serif; text-transform: capitalize; }

@@ -15,6 +15,7 @@ export function NearbyIssuesScreen({ onSelect, onReport }: { onSelect: (id: stri
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<IssueCategory | 'ALL'>('ALL');
+  const [mapReady, setMapReady] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapLoadTimedOut, setMapLoadTimedOut] = useState(false);
   const [mapRetry, setMapRetry] = useState(0);
@@ -65,10 +66,15 @@ export function NearbyIssuesScreen({ onSelect, onReport }: { onSelect: (id: stri
     return coordinate ? [{ issue, coordinate }] : [];
   }), [matchingIssues]);
   const handleMapLoaded = useCallback(() => {
+    setMapReady(true);
     setMapLoaded(true);
     setMapLoadTimedOut(false);
   }, []);
+  const handleMapReady = useCallback(() => {
+    setMapReady(true);
+  }, []);
   const retryMap = useCallback(() => {
+    setMapReady(false);
     setMapLoaded(false);
     setMapLoadTimedOut(false);
     setMapRetry((attempt) => attempt + 1);
@@ -110,6 +116,7 @@ export function NearbyIssuesScreen({ onSelect, onReport }: { onSelect: (id: stri
         showsUserLocation
         showsMyLocationButton
         accessibilityLabel="Map of nearby CivicFix reports"
+        onMapReady={handleMapReady}
         onMapLoaded={handleMapLoaded}
       >
         {mappableIssues.map(({ issue, coordinate }) => (
@@ -127,7 +134,9 @@ export function NearbyIssuesScreen({ onSelect, onReport }: { onSelect: (id: stri
         {mapLoaded
           ? `${mappableIssues.length} mapped reports · tap a pin for details`
           : mapLoadTimedOut
-            ? 'Map tiles have not loaded.'
+            ? mapReady
+              ? 'Map is ready, but tiles have not loaded.'
+              : 'Map has not finished initializing.'
             : 'Loading map tiles…'}
       </Text>
       {mapLoadTimedOut && !mapLoaded ? (
@@ -143,6 +152,7 @@ export function NearbyIssuesScreen({ onSelect, onReport }: { onSelect: (id: stri
   return <FlatList<Issue>
     style={styles.screen}
     contentContainerStyle={styles.content}
+    removeClippedSubviews={false}
     data={matchingIssues}
     keyExtractor={(issue) => issue.id}
     renderItem={renderIssue}
@@ -173,7 +183,7 @@ const styles = StyleSheet.create({
   filterActive: { backgroundColor: colors.blue, borderColor: colors.blue },
   filterText: { color: colors.muted, fontSize: 11, fontWeight: '700' },
   filterTextActive: { color: colors.surface },
-  mapCard: { backgroundColor: colors.surface, borderRadius: 20, marginBottom: 18, overflow: 'hidden', ...elevations.card },
+  mapCard: { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 20, borderWidth: 1, marginBottom: 18 },
   map: { height: 250, width: '100%' },
   mapCaption: { color: colors.muted, fontSize: 11, paddingHorizontal: 14, paddingVertical: 11 },
   mapRetry: { alignSelf: 'flex-start', marginBottom: 10, marginLeft: 14 },

@@ -156,6 +156,23 @@ The endpoint accepts either an active admin JWT or the constant-time checked sch
 
 Administrators can download filtered issue CSV data from `GET /api/admin/reports/export`. The export is authorization-protected, capped at 10,000 rows, escapes CSV values, and prefixes formula-like values to reduce spreadsheet injection risk.
 
+## Administrator password recovery
+
+The admin dashboard's **Settings** page includes a password-change form. `PATCH /api/admin/me/password` requires a valid admin JWT, verifies the current password, enforces the existing 8-128 character password limit and matching confirmation, and hashes the new password with the same bcrypt configuration used by login. Password changes do not revoke already-issued JWTs; there is no refresh-token or token-revocation store in the current authentication design.
+
+For a forgotten password, use the backend's one-off interactive recovery script rather than the development seed. It updates only an existing active `ADMIN` matching the exact email; it never creates an account. Run it from an interactive terminal after verifying the intended `backend/.env` target:
+
+```powershell
+$env:ADMIN_RECOVERY_EMAIL = "the-existing-admin@example.com"
+$env:ADMIN_RECOVERY_EXPECTED_HOST = "the-expected-mongodb-host"
+$env:ADMIN_RECOVERY_EXPECTED_DATABASE = "the-expected-database-name"
+npm run admin:recover --prefix backend
+```
+
+The script checks those exact target values against the configured MongoDB connection, displays the non-secret environment/host/database target, requires typing the full target confirmation, then prompts twice for the temporary password without echoing it. Use the temporary password supplied by the administrator and change it immediately after signing in. The script does not print passwords, hashes, or database connection errors containing credentials. Clear the `ADMIN_RECOVERY_*` variables after use.
+
+Production recovery is disabled unless `ADMIN_RECOVERY_ALLOW_PRODUCTION=true` is explicitly set. Do not set that flag or point the script at production until the target account, host, database, exact command, and effect have been reviewed and the production reset explicitly approved. The reset changes only that existing administrator document's password hash; it does not alter other users or data. Do not run `npm run seed` for account recovery.
+
 ## Phase 4B authority resolution
 
 Phase 4B extends the authority workflow:

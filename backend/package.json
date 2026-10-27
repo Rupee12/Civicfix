@@ -9,6 +9,8 @@
     "start": "node dist/server.js",
     "lint": "tsc --noEmit -p tsconfig.json",
     "seed": "tsx src/scripts/seed.ts",
+    "admin:recover": "tsx src/scripts/recoverAdminPassword.ts",
+    "admin:bootstrap": "tsx src/scripts/bootstrapAdmin.ts",
     "backfill-priority": "tsx src/scripts/backfillPriority.ts",
     "test": "tsx --test src/**/*.test.ts"
   },

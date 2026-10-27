@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { AdminShell, type ConnectionState } from './components/AdminShell'
 import { IssueMap, type MapIssue } from './components/IssueMap'
 import { apiRequest, clearSession, downloadApiFile, getApiBaseUrl, getSession, login, type Session, ApiClientError } from './api'
@@ -223,9 +223,57 @@ function ReportsPage({ token }: { token: string }) {
 }
 
 function SettingsPage({ token, user }: { token: string; user: Session['user'] }) {
-  const [name, setName] = useState(user.name); const [message, setMessage] = useState('')
-  const save = async (event: FormEvent) => { event.preventDefault(); try { await apiRequest('/auth/me', { method: 'PATCH', body: JSON.stringify({ name }) }, token); setMessage('Profile updated successfully.') } catch (e) { setMessage(e instanceof Error ? e.message : 'Profile update failed.') } }
-  return <section className="operations-page"><header className="issues-heading"><div><p className="eyebrow">CIVICFIX / ACCOUNT</p><h1>Settings</h1><p className="subhead">{user.email}</p></div></header><section className="panel"><form onSubmit={save}><label>Name<input value={name} onChange={(e) => setName(e.target.value)} minLength={2} required /></label><button type="submit">Save profile</button>{message ? <p>{message}</p> : null}</form></section></section>
+  const [name, setName] = useState(user.name); const [profileMessage, setProfileMessage] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  const passwordChangeInProgress = useRef(false)
+  const save = async (event: FormEvent) => { event.preventDefault(); try { await apiRequest('/auth/me', { method: 'PATCH', body: JSON.stringify({ name }) }, token); setProfileMessage('Profile updated successfully.') } catch (e) { setProfileMessage(e instanceof Error ? e.message : 'Profile update failed.') } }
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (passwordChangeInProgress.current) return
+    setPasswordError('')
+    setPasswordMessage('')
+    if (newPassword.length < 8 || newPassword.length > 128) {
+      setPasswordError('New password must be between 8 and 128 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirmation do not match.')
+      return
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError('New password must be different from the current password.')
+      return
+    }
+
+    passwordChangeInProgress.current = true
+    setChangingPassword(true)
+    try {
+      await apiRequest('/admin/me/password', {
+        method: 'PATCH',
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+      }, token)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setPasswordMessage('Password changed successfully.')
+    } catch (requestError) {
+      setPasswordError(requestError instanceof Error ? requestError.message : 'Password change failed.')
+    } finally {
+      passwordChangeInProgress.current = false
+      setChangingPassword(false)
+    }
+  }
+  return <section className="operations-page"><header className="issues-heading"><div><p className="eyebrow">CIVICFIX / ACCOUNT</p><h1>Settings</h1><p className="subhead">{user.email}</p></div></header><section className="panel settings-panel"><form className="settings-form" onSubmit={(event) => void save(event)}><h2>Profile</h2><label>Name<input value={name} onChange={(e) => setName(e.target.value)} minLength={2} required /></label><button type="submit">Save profile</button>{profileMessage ? <p role="status">{profileMessage}</p> : null}</form></section><section className="panel settings-panel"><form className="settings-form" onSubmit={(event) => void changePassword(event)}><div><p className="eyebrow">SECURITY</p><h2>Change password</h2><p className="panel-description">Use your current password to set a new password of 8 to 128 characters.</p></div><PasswordField label="Current password" value={currentPassword} onChange={setCurrentPassword} autoComplete="current-password" /><PasswordField label="New password" value={newPassword} onChange={setNewPassword} autoComplete="new-password" minLength={8} maxLength={128} /><PasswordField label="Confirm new password" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" minLength={8} maxLength={128} />{passwordError ? <p className="password-feedback error" role="alert">{passwordError}</p> : null}{passwordMessage ? <p className="password-feedback success" role="status">{passwordMessage}</p> : null}<button type="submit" disabled={changingPassword}>{changingPassword ? 'Changing password…' : 'Change password'}</button></form></section></section>
+}
+
+function PasswordField({ label, value, onChange, autoComplete, minLength, maxLength }: { label: string; value: string; onChange: (value: string) => void; autoComplete: string; minLength?: number; maxLength?: number }) {
+  const [visible, setVisible] = useState(false)
+  return <label className="password-field">{label}<span className="password-input-wrap"><input type={visible ? 'text' : 'password'} value={value} onChange={(event) => onChange(event.target.value)} autoComplete={autoComplete} minLength={minLength} maxLength={maxLength} required /><button type="button" className="password-visibility" onClick={() => setVisible((current) => !current)} aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}>{visible ? 'Hide' : 'Show'}</button></span></label>
 }
 
 function MapPage({ token, onViewDetails }: { token: string; onViewDetails: (issue: MapIssue) => void }) {
